@@ -6,6 +6,9 @@
 // `==` are preserved verbatim. A repeated section header extends the
 // existing section, and duplicate keys are kept in declaration order;
 // `get` returns the first occurrence.
+//
+// ponytail: comments are whole-line only and values are single-line (no
+// go-ini style continuation); add both when a real model file needs them.
 
 ///|
 /// One `key = value` entry inside a configuration section.
