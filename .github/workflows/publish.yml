@@ -1,0 +1,37 @@
+name: Publish
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hustcer/setup-moonbit@v1.22
+      - name: Toolchain
+        run: moon version --all
+      - name: Resolve dependencies
+        run: moon update
+      - name: Pre-publish verification
+        run: |
+          moon fmt --check
+          moon check --target all --deny-warn
+          moon test --target all --deny-warn
+      - name: Publish to Mooncakes
+        env:
+          MOONCAKES_TOKEN: ${{ secrets.MOONCAKES_TOKEN }}
+        shell: bash
+        run: |
+          if [ -z "$MOONCAKES_TOKEN" ]; then
+            echo "Error: the MOONCAKES_TOKEN secret is not set." >&2
+            exit 1
+          fi
+          echo "$MOONCAKES_TOKEN" > ~/.moon/credentials.json
+          moon publish
+          rm -f ~/.moon/credentials.json
