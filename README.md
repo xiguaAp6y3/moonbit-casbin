@@ -30,6 +30,11 @@ matcher 表达式求值引擎；后续将提供访问决策 API（`enforce`）�
   CSV 策略解析（RFC 4180 引号子集）、5 种 effect 聚合
   （allow-override / deny-override / allow-and-deny / priority /
   subjectPriority）、`Enforcer::enforce` 逐行匹配与提前终止；
+- **RBAC**：角色层级（BFS 可达性 + `maxHierarchyLevel` 限制）、角色域隔离
+  （`g = _, _, _`）、`g` / `g2` 函数自动注入、分组策略变更后角色链接自动
+  重建（可关闭）；
+- **管理 API**：策略与角色增删查（含空串通配的过滤查询）、隐式角色与隐式
+  权限查询、`delete_user` / `delete_role` 级联删除；
 - **内置函数**：`keyMatch`、`keyGet`，用例表对齐 Casbin 官方测试；
 - **结构化错误**：配置/模型/策略/匹配表达式/判定六类错误分类
   （`ConfigSyntax`、`ModelValidation`、`PolicySyntax`、`MatcherSyntax`、
@@ -46,15 +51,17 @@ MoonBit. It loads the Casbin model configuration format (request, policy,
 and role definitions, policy effect, matchers), ships its own matcher
 expression engine (lexer, Pratt parser, tree-walking evaluator with
 short-circuit logic, `in` lists, field access, and an extensible function
-registry), and enforces requests end to end: accessor preprocessing,
-an in-memory policy store, a CSV policy adapter, the five Casbin policy
+registry), enforces requests end to end (accessor preprocessing, an
+in-memory policy store, a CSV policy adapter, the five Casbin policy
 effects, and `Enforcer::enforce` with per-row matching and early
-termination. It will grow into a full library with RBAC role hierarchy,
-management APIs, and the regex/glob/IP built-ins. It is **not** a port of
-the Casbin Go source code; the model format and semantics are
-reimplemented from the public documentation. The library depends only on
-the MoonBit standard library and passes check, build, and test on `wasm`,
-`wasm-gc`, `js`, and `native`.
+termination), and implements RBAC: role hierarchy with a configurable
+depth limit, role domains, `g` / `g2` function injection, plus the
+management APIs for policies, roles, implicit roles, implicit permissions,
+and cascading deletes. It will grow the regex/glob/IP built-ins and a CLI.
+It is **not** a port of the Casbin Go source code; the model format and
+semantics are reimplemented from the public documentation. The library
+depends only on the MoonBit standard library and passes check, build, and
+test on `wasm`, `wasm-gc`, `js`, and `native`.
 
 ## Casbin 简介
 
@@ -90,26 +97,28 @@ Casbin 是一个广泛使用的授权库，把访问控制策略从业务代码�
 | Matcher 表达式求值（词法 / Pratt 语法 / 短路求值 / 函数注册表） | 已实现并测试 |
 | 判定链路（预处理 / 策略校验 / 逐行匹配 / 提前终止） | 已实现并测试 |
 | 策略 effect（allow-override / deny-override / allow-and-deny / priority / subjectPriority） | 已实现并测试 |
+| RBAC 角色层级与角色域（`g` / `g2`、domain、层级上限） | 已实现并测试 |
+| 策略与角色管理 API（增删查、通配过滤、隐式角色与权限、级联删除） | 已实现并测试 |
 | 内存策略存储（保序、去重）与 CSV 策略解析 | 已实现并测试 |
 | 内置函数 `keyMatch`、`keyGet` | 已实现并测试 |
 | 结构化错误（六类错误 + 行号或偏移） | 已实现并测试 |
-| RBAC 角色层级与角色域（`g` / `g2`、domain） | 计划中 |
-| 策略与角色管理 API（`add_policy`、`add_role_for_user` 等） | 计划中 |
 | 内置函数 `keyMatch2`..`keyMatch5`、`regexMatch`、`globMatch`、`ipMatch` | 计划中 |
+| 角色名模式匹配（`AddMatchingFunc` / 域匹配函数） | 计划中 |
 | CLI 工具 | 计划中 |
 
 ## 不支持内容
 
-当前代码（v0.2 开发中）**不包含**：
+当前代码（v0.3）**不包含**：
 
-- RBAC 角色管理（`g` 函数注入、角色层级与角色域）；
-- 策略与角色的增删管理 API（判定链路本身已可用，但策略只能整体加载）；
 - 正则 / glob / IP 类内置匹配函数（`regexMatch`、`keyMatch2`..`keyMatch5`、
   `globMatch`、`ipMatch`）；
+- 角色名模式匹配（Casbin 的 `AddMatchingFunc` / `AddDomainMatchingFunc`）：
+  `has_link` 按名字精确比较；
 - `eval()` 内置函数、条件角色（temporal roles）与 `EnforceContext`；
-- 持久化适配器（数据库、Redis 等）与 Watcher；
+- 持久化适配器（数据库、Redis 等）与 Watcher（策略只驻留内存，由调用方
+  提供文本或逐条添加）；
 - 分布式部署、过滤器策略加载与自适应策略；
-- 策略管理 HTTP 接口或 Dashboard。
+- 策略管理 HTTP 接口、Dashboard 与 CLI 工具。
 
 上表"计划中"的能力按 `Roadmap` 逐步实现；在实现之前，README 与发布说明
 不会声称支持。
@@ -221,6 +230,40 @@ assert_true(enforcer.enforce(["alice", "data1", "read"]).unwrap())
 assert_true(!enforcer.enforce(["alice", "data1", "write"]).unwrap())
 ```
 
+RBAC：`g` 规则定义角色，判定期自动解析角色层级，管理 API 可在线增删。
+
+```moonbit
+let rbac_model_text =
+  #|[request_definition]
+  #|r = sub, obj, act
+  #|
+  #|[policy_definition]
+  #|p = sub, obj, act
+  #|
+  #|[role_definition]
+  #|g = _, _
+  #|
+  #|[policy_effect]
+  #|e = some(where (p.eft == allow))
+  #|
+  #|[matchers]
+  #|m = g(r.sub, p.sub) && r.obj == p.obj && r.act == p.act
+
+let model = Model::from_config(Config::parse(rbac_model_text).unwrap()).unwrap()
+let enforcer = Enforcer::new(model).unwrap()
+let policy =
+  #|p, alice, data1, read
+  #|p, data2_admin, data2, read
+  #|g, alice, data2_admin
+enforcer.load_policy_from_text(policy).unwrap()
+assert_true(enforcer.enforce(["alice", "data2", "read"]).unwrap()) // 通过角色
+assert_true(enforcer.add_role_for_user("bob", "data2_admin").unwrap())
+assert_true(enforcer.get_implicit_roles_for_user("bob") == ["data2_admin"])
+assert_true(enforcer.enforce(["bob", "data2", "read"]).unwrap())
+assert_true(enforcer.delete_role_for_user("bob", "data2_admin").unwrap())
+assert_true(!enforcer.enforce(["bob", "data2", "read"]).unwrap())
+```
+
 ## 开发与验证
 
 ```sh
@@ -232,10 +275,12 @@ moon package --list                   # 打包清单
 
 ## 测试结果
 
-- 具名测试：71 个（配置解析 10、模型加载 8、词法 5、语法 6、求值 8、
-  内置函数 5、预处理 4、effect 5、策略存储 4、CSV 适配器 4、判定 12）；
-- `keyMatch` / `keyGet` 用例表与 `EscapeAssertion` / `RemoveComments`
-  用例表移植自 Casbin 官方测试，逐项来源见 `THIRD_PARTY_NOTICES.md`；
+- 具名测试：83 个（配置解析 10、模型加载 8、词法 5、语法 6、求值 8、
+  内置函数 5、预处理 4、effect 5、策略存储 4、CSV 适配器 4、判定 12、
+  角色管理器 5、RBAC 端到端 7）；
+- `keyMatch` / `keyGet` 用例表、`EscapeAssertion` / `RemoveComments`
+  用例表、RBAC 模型与角色 API 链路均移植自 Casbin 官方测试与示例，逐项
+  来源见 `THIRD_PARTY_NOTICES.md`；
 - `wasm` / `wasm-gc` / `js` / `native` 四目标：`check` / `build` / `test`
   均通过，0 errors，0 warnings。
 
@@ -256,7 +301,9 @@ moon package --list                   # 打包清单
 ├── effect.mbt               policy effect 与效果聚合
 ├── policy.mbt               内存策略存储
 ├── adapter_csv.mbt          CSV 策略解析
-├── enforcer.mbt             判定核心
+├── enforcer.mbt             判定核心与角色链接
+├── role_manager.mbt         角色图与角色管理器
+├── management_api.mbt       策略与角色管理 API
 ├── *_test.mbt               黑盒测试（含 lexer_wbtest.mbt 白盒测试）
 ├── moon.mod / moon.pkg      模块清单
 └── LICENSE / README.md
@@ -265,14 +312,14 @@ moon package --list                   # 打包清单
 ## Roadmap
 
 - v0.1：配置解析、模型加载、结构化错误、CI。
-- v0.2（开发中）：matcher 表达式引擎、判定链路（预处理、策略存储、CSV
-  适配器、effect 聚合、`enforce`）已完成；RBAC 角色管理与策略管理 API
-  进行中。
-- v0.3：RBAC 角色层级与角色域、策略与角色管理 API。
+- v0.2：matcher 表达式引擎、判定链路（预处理、策略存储、CSV 适配器、
+  effect 聚合、`enforce`）。
+- v0.3（当前）：RBAC 角色层级与角色域、`g` / `g2` 注入、策略与角色管理
+  API、隐式角色与权限、级联删除。
 - v0.4：内置匹配函数补齐（`keyMatch2`..`keyMatch5`、`regexMatch`、
   `globMatch`、`ipMatch`）、CLI 工具、示例工程。
 
-这些是未来计划，尚未完成。
+v0.4 是未来计划，尚未完成。
 
 ## 移植说明
 

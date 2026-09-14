@@ -20,6 +20,12 @@
 - **`EscapeAssertion` / `RemoveComments` case tables** — ported from
   Casbin's `util/util_test.go` (Apache-2.0) into `preprocess_test.mbt`.
   Again only the input/expected-value tables are reproduced.
+- **RBAC model and policy examples, role API chain** — Casbin's
+  `examples/rbac_model.conf`, `examples/rbac_policy.csv`,
+  `examples/rbac_with_domains_model.conf` and the `TestRoleAPI` /
+  `TestImplicitPermissionAPI` sequences from `rbac_api_test.go`
+  (Apache-2.0) are reproduced as fixtures and expectations in
+  `rbac_api_test.mbt`.
 - Further Casbin test cases will be listed here as they are ported.
 
 ## Runtime dependencies
