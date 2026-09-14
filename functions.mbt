@@ -53,11 +53,20 @@ pub fn FunctionRegistry::get(
 }
 
 ///|
-/// A registry containing the dependency-free built-in functions.
+/// A registry containing the built-in functions.
 pub fn builtin_functions() -> FunctionRegistry {
   let registry = FunctionRegistry::new()
   registry.add("keyMatch", key_match_function)
+  registry.add("keyMatch2", key_match2_function)
+  registry.add("keyMatch3", key_match3_function)
+  registry.add("keyMatch4", key_match4_function)
+  registry.add("keyMatch5", key_match5_function)
   registry.add("keyGet", key_get_function)
+  registry.add("keyGet2", key_get2_function)
+  registry.add("keyGet3", key_get3_function)
+  registry.add("regexMatch", regex_match_function)
+  registry.add("globMatch", glob_match_function)
+  registry.add("ipMatch", ip_match_function)
   registry
 }
 

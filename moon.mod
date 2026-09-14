@@ -20,3 +20,7 @@ keywords = [
   "security",
   "moonbit",
 ]
+
+import {
+  "moonbitlang/regexp@0.3.5",
+}
