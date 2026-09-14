@@ -13,19 +13,25 @@ in-memory policy store.
 
 `moonbit-casbin` 是使用 MoonBit 实现的 [Casbin] 风格授权引擎。它按照与
 Casbin 相同的模型配置格式（`[request_definition]`、`[policy_definition]`、
-`[role_definition]`、`[policy_effect]`、`[matchers]`）加载授权模型，后续将
-提供访问决策 API（`enforce`）、策略存储与管理接口。
+`[role_definition]`、`[policy_effect]`、`[matchers]`）加载授权模型，并自带
+matcher 表达式求值引擎；后续将提供访问决策 API（`enforce`）、策略存储与
+管理接口。
 
-当前版本（0.1.0）已实现：
+当前已实现：
 
 - **配置解析**：完整解析 Casbin 模型文件的小型 INI 方言，支持 `#` / `;`
   注释、空行、重复节合并、重复键按声明顺序保留、CRLF 换行；
 - **模型加载**：把配置装载为请求定义、策略定义、角色定义、策略 effect 与
   matcher 断言，校验必需的节和取值（定义键前缀、token 标识符、effect 唯一性）；
-- **结构化错误**：配置语法错误（`CasbinErrorKind::ConfigSyntax`）与模型语义
-  错误（`ModelValidation`）分开，语法错误携带 1-based 行号；
+- **Matcher 表达式引擎**：自研词法器、Pratt 解析器与树遍历求值器，支持
+  比较、`&&` / `||`（短路）、`in` 列表、字段访问、算术与字符串拼接；
+  函数注册表可通过 `FunctionRegistry::add` 扩展；语法错误携带字符偏移；
+- **内置函数**：`keyMatch`、`keyGet`，用例表对齐 Casbin 官方测试；
+- **结构化错误**：配置/模型错误（`ConfigSyntax`、`ModelValidation`）与
+  matcher 错误（`MatcherSyntax`、`MatcherEval`）分类，语法错误携带行号或
+  字符偏移；
 - **零依赖**：仅依赖 MoonBit 标准库，`wasm` / `wasm-gc` / `js` / `native`
-  四目标通过检查、构建与测试。
+  四目标通过检查、构建与测试；
 - **持续集成**：GitHub Actions 严格流水线（格式检查、`--deny-warn` 检查、
   四目标构建与测试、打包清单）。
 
@@ -33,15 +39,16 @@ Casbin 相同的模型配置格式（`[request_definition]`、`[policy_definitio
 
 `moonbit-casbin` is a Casbin-style authorization engine implemented in
 MoonBit. It loads the Casbin model configuration format (request, policy,
-and role definitions, policy effect, matchers) and will grow into a full
-enforcement library: matcher expression evaluation, effect resolution,
-RBAC role hierarchy with domains, an enforcer API, and policy storage with
-a CSV file adapter. It is **not** a port of the Casbin Go source code; the
-model format and semantics are reimplemented from the public
-documentation. Version 0.1.0 covers configuration parsing and model
-loading with structured errors. The library depends only on the MoonBit
-standard library and passes check, build, and test on `wasm`, `wasm-gc`,
-`js`, and `native`.
+and role definitions, policy effect, matchers) and ships its own matcher
+expression engine: a lexer, a Pratt parser, and a tree-walking evaluator
+with short-circuit logic, `in` lists, field access, arithmetic, and an
+extensible function registry (`keyMatch` and `keyGet` are built in). It
+will grow into a full enforcement library: effect resolution, RBAC role
+hierarchy with domains, an enforcer API, and policy storage with a CSV
+adapter. It is **not** a port of the Casbin Go source code; the model
+format and semantics are reimplemented from the public documentation. The
+library depends only on the MoonBit standard library and passes check,
+build, and test on `wasm`, `wasm-gc`, `js`, and `native`.
 
 ## Casbin 简介
 
@@ -74,20 +81,25 @@ Casbin 是一个广泛使用的授权库，把访问控制策略从业务代码�
 | --- | --- |
 | 模型配置解析（INI 方言、注释、重复节、CRLF） | 已实现并测试 |
 | 模型加载与校验（`r` / `p` / `g` / `e` / `m`） | 已实现并测试 |
-| 结构化错误（语法 / 语义分类 + 行号） | 已实现并测试 |
-| Matcher 表达式求值 | 计划中 |
+| Matcher 表达式求值（词法 / Pratt 语法 / 短路求值 / 函数注册表） | 已实现并测试 |
+| 内置函数 `keyMatch`、`keyGet` | 已实现并测试 |
+| 结构化错误（语法 / 语义分类 + 行号或偏移） | 已实现并测试 |
 | 策略 effect 求值（allow-override / deny-override / priority） | 计划中 |
 | RBAC 角色层级与角色域（`g` / `g2`、domain） | 计划中 |
 | Enforcer 核心 API（`enforce`、策略与角色管理） | 计划中 |
 | 内存策略存储与 CSV 文件适配器 | 计划中 |
+| 内置函数 `keyMatch2`..`keyMatch5`、`regexMatch`、`globMatch`、`ipMatch` | 计划中 |
 | CLI 工具 | 计划中 |
 
 ## 不支持内容
 
-当前版本（0.1.0）**不包含**：
+当前代码（v0.2 开发中）**不包含**：
 
-- 访问决策（`enforce`）与任何表达式求值；
-- 策略存储、持久化适配器（数据库、Redis 等）与 Watcher；
+- 访问决策（`enforce`）与策略存储；
+- effect 聚合与 RBAC 角色管理（`g` 函数注入）；
+- 正则 / glob / IP 类内置匹配函数（`regexMatch`、`keyMatch2`..`keyMatch5`、
+  `globMatch`、`ipMatch`）；
+- 持久化适配器（数据库、Redis 等）与 Watcher；
 - 分布式部署、过滤器策略加载与自适应策略；
 - 策略管理 HTTP 接口或 Dashboard。
 
@@ -155,6 +167,26 @@ match Config::parse("r = sub, obj, act") {
 }
 ```
 
+Matcher 表达式引擎可以独立使用。标识符是 Casbin 预处理后的名字
+（`r.sub` 写作 `r_sub`），求值时的取值方式由调用方提供：
+
+```moonbit
+let value = parse_matcher("keyMatch(r_obj, p_obj) && !denied")
+  .unwrap()
+  .eval(
+    (name) =>
+      match name {
+        "r_obj" => Some(Value::String("/foo/bar"))
+        "p_obj" => Some(Value::String("/foo/*"))
+        "denied" => Some(Value::Bool(false))
+        _ => None
+      },
+    builtin_functions(),
+  )
+  .unwrap()
+// value == Value::Bool(true)
+```
+
 ## 开发与验证
 
 ```sh
@@ -166,7 +198,10 @@ moon package --list                   # 打包清单
 
 ## 测试结果
 
-- 具名测试：18 个（配置解析 10 个 + 模型加载 8 个）；
+- 具名测试：42 个（配置解析 10、模型加载 8、词法 5、语法 6、求值 8、
+  内置函数 5）；
+- `keyMatch` / `keyGet` 用例表移植自 Casbin 官方测试，逐项来源见
+  `THIRD_PARTY_NOTICES.md`；
 - `wasm` / `wasm-gc` / `js` / `native` 四目标：`check` / `build` / `test`
   均通过，0 errors，0 warnings。
 
@@ -177,21 +212,26 @@ moon package --list                   # 打包清单
 ├── error.mbt                结构化错误类型
 ├── config.mbt               模型配置解析
 ├── model.mbt                模型加载与校验
-├── config_test.mbt          配置解析测试
-├── model_test.mbt           模型加载测试
+├── value.mbt                求值器的运行时值模型
+├── expr.mbt                 matcher 表达式 AST
+├── lexer.mbt                matcher 词法器
+├── parser.mbt               matcher Pratt 解析器
+├── eval.mbt                 matcher 求值器
+├── functions.mbt            函数注册表与内置函数
+├── *_test.mbt               黑盒测试（含 lexer_wbtest.mbt 白盒测试）
 ├── moon.mod / moon.pkg      模块清单
 └── LICENSE / README.md
 ```
 
 ## Roadmap
 
-- v0.1（当前）：配置解析、模型加载、结构化错误、CI。
-- v0.2：matcher 表达式求值（词法、语法、求值）、策略 effect 求值、
-  内存策略存储与 CSV 适配器。
+- v0.1：配置解析、模型加载、结构化错误、CI。
+- v0.2（开发中）：matcher 表达式引擎（词法、Pratt 语法、求值、函数注册表）
+  已完成；策略 effect 求值、内存策略存储与 CSV 适配器进行中。
 - v0.3：Enforcer 核心 API（`enforce`、策略与角色管理）、RBAC 角色层级
   与角色域。
-- v0.4：内置匹配函数（`keyMatch` 系列、`regexMatch`、`ipMatch` 等）、
-  CLI 工具、示例工程。
+- v0.4：内置匹配函数补齐（`keyMatch2`..`keyMatch5`、`regexMatch`、
+  `globMatch`、`ipMatch`）、CLI 工具、示例工程。
 
 这些是未来计划，尚未完成。
 
@@ -202,8 +242,9 @@ moon package --list                   # 打包清单
 - 原项目许可证：Apache-2.0；
 - 本项目许可证：Apache-2.0；
 - 参考范围：模型配置格式与判定语义按 Casbin 公开文档重新实现，不复制
-  Go 源码；后续移植测试用例时会在 `THIRD_PARTY_NOTICES.md` 中逐项注明
-  来源与范围。
+  Go 源码；`keyMatch` / `keyGet` 的用例表已移植自 Casbin 官方测试
+  （`util/builtin_operators_test.go`），逐项来源与范围见
+  `THIRD_PARTY_NOTICES.md`。
 
 ## 发布状态
 

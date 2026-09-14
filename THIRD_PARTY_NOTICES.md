@@ -8,9 +8,16 @@
   (`[request_definition]`, `[policy_definition]`, `[role_definition]`,
   `[policy_effect]`, `[matchers]`) and its authorization semantics as
   documented by the Casbin project. The implementation is written from
-  scratch in MoonBit; no Go source code is copied or translated. When
-  behavior is verified against Casbin's public test cases, the ported test
-  data will be listed here with its origin and scope.
+  scratch in MoonBit; no Go source code is copied or translated.
+
+## Ported test data
+
+- **`keyMatch` / `keyGet` case tables** — ported from Casbin's
+  `util/builtin_operators_test.go` (Apache-2.0). The input/expected-value
+  pairs are reproduced in `functions_test.mbt` to verify behavioral
+  parity. Only the test tables are reproduced; no implementation code is
+  copied. Further Casbin test cases will be listed here as they are
+  ported.
 
 ## Runtime dependencies
 
