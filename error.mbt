@@ -18,10 +18,14 @@ pub(all) enum CasbinErrorKind {
   ConfigSyntax
   /// The configuration is well formed but does not describe a valid model.
   ModelValidation
+  /// Policy text is malformed.
+  PolicySyntax
   /// A matcher expression is malformed.
   MatcherSyntax
   /// A matcher expression cannot be evaluated against the given values.
   MatcherEval
+  /// An enforcement request is inconsistent with the model or the policy.
+  Enforcement
 } derive(Eq, Debug)
 
 ///|
