@@ -14,9 +14,11 @@
 //    result contributes an allow effect, and the effect expression merges
 //    that single result.
 //
-// The final decision is `effect == Allow`. Role definitions (`g`) are not
-// wired into the function registry yet; matchers that call `g` fail with a
-// clear "function is not defined" error until the RBAC milestone lands.
+// The final decision is `effect == Allow`. Role definitions (`g`, `g2`) get
+// one role manager each; the manager is injected into the function registry
+// under the definition key, and role links are rebuilt from the grouping
+// policy after every load or grouping-policy change (see `build_role_links`
+// and `enable_auto_build_role_links`).
 
 ///|
 /// An enforcer bound to one model and one in-memory policy store.
@@ -31,6 +33,8 @@ pub(all) struct Enforcer {
   policy_type : String
   policy_tokens : Array[String]
   eft_index : Int?
+  role_managers : Array[(String, RoleManager)]
+  mut auto_build_role_links : Bool
 }
 
 ///|
@@ -82,17 +86,26 @@ fn enforcer_new_raise(model : Model) -> Enforcer raise CasbinError {
   let request_tokens = qualified_tokens(request_assertion)
   let policy_tokens = qualified_tokens(policy_assertion)
   let eft_index = find_token(policy_tokens, "p_eft")
+  let functions = builtin_functions()
+  let role_managers : Array[(String, RoleManager)] = []
+  for assertion in model.role {
+    let manager = RoleManager::new()
+    functions.add(assertion.key(), make_g_function(manager))
+    role_managers.push((assertion.key(), manager))
+  }
   {
     model,
     store: PolicyStore::new(),
     effect,
-    functions: builtin_functions(),
+    functions,
     matcher,
     uses_policy: matcher_source.contains("p_"),
     request_tokens,
     policy_type: "p",
     policy_tokens,
     eft_index,
+    role_managers,
+    auto_build_role_links: true,
   }
 }
 
@@ -116,6 +129,115 @@ pub fn Enforcer::add_function(
   function : (Array[Value]) -> Value raise CasbinError,
 ) -> Unit {
   self.functions.add(name, function)
+}
+
+///|
+/// Rebuilds every role graph from the grouping policy, mirroring Casbin's
+/// `BuildRoleLinks`. Called automatically after policy loads and grouping
+/// policy changes unless automatic rebuilding is disabled.
+pub fn Enforcer::build_role_links(self : Enforcer) -> Result[Unit, CasbinError] {
+  Ok(enforcer_build_role_links_raise(self)) catch {
+    error => Err(error)
+  }
+}
+
+///|
+fn enforcer_build_role_links_raise(
+  enforcer : Enforcer,
+) -> Unit raise CasbinError {
+  for entry in enforcer.role_managers {
+    let key = entry.0
+    let manager = entry.1
+    manager.clear()
+    let token_count = match enforcer.model.role_definition(key) {
+      Some(assertion) => assertion.tokens().length()
+      None => 0
+    }
+    if token_count < 2 {
+      raise casbin_error(
+        ModelValidation,
+        "role definition \"" + key + "\" must have at least 2 tokens",
+      )
+    }
+    for row in enforcer.store.rows(key) {
+      if row.length() < token_count {
+        raise casbin_error(
+          Enforcement,
+          "grouping policy elements do not meet role definition \"" + key + "\"",
+        )
+      }
+      if token_count >= 3 {
+        manager.add_link(row[0], row[1], domain=row[2])
+      } else {
+        manager.add_link(row[0], row[1])
+      }
+    }
+  }
+}
+
+///|
+/// Enables or disables automatic role-link rebuilding. Enabled by default,
+/// like Casbin.
+pub fn Enforcer::enable_auto_build_role_links(
+  self : Enforcer,
+  enabled : Bool,
+) -> Unit {
+  self.auto_build_role_links = enabled
+}
+
+///|
+/// Whether automatic role-link rebuilding is enabled.
+pub fn Enforcer::is_auto_build_role_links(self : Enforcer) -> Bool {
+  self.auto_build_role_links
+}
+
+///|
+/// Builds the `g`-style matcher function for one role manager: two
+/// arguments test `has_link`, three arguments additionally pass the domain.
+/// Like Casbin, a failed lookup is `false`; a wrong argument count or a
+/// non-string argument raises `MatcherEval`.
+fn make_g_function(
+  manager : RoleManager,
+) -> (Array[Value]) -> Value raise CasbinError {
+  arguments => {
+    let count = arguments.length()
+    if count != 2 && count != 3 {
+      raise casbin_error(
+        MatcherEval,
+        "g: expected 2 or 3 arguments, but got " + count.to_string(),
+      )
+    }
+    let name1 = match arguments[0] {
+      Value::String(name) => name
+      other =>
+        raise casbin_error(
+          MatcherEval,
+          "g: argument must be a string, got " + other.type_name(),
+        )
+    }
+    let name2 = match arguments[1] {
+      Value::String(name) => name
+      other =>
+        raise casbin_error(
+          MatcherEval,
+          "g: argument must be a string, got " + other.type_name(),
+        )
+    }
+    let linked = if count == 2 {
+      manager.has_link(name1, name2)
+    } else {
+      let domain = match arguments[2] {
+        Value::String(name) => name
+        other =>
+          raise casbin_error(
+            MatcherEval,
+            "g: argument must be a string, got " + other.type_name(),
+          )
+      }
+      manager.has_link(name1, name2, domain~)
+    }
+    Value::Bool(linked)
+  }
 }
 
 ///|
@@ -191,6 +313,9 @@ fn enforcer_load_policy_raise(
       raise casbin_error(PolicySyntax, "invalid policy type \"" + key + "\"")
     }
     ignore(enforcer.store.add(key, row))
+  }
+  if enforcer.auto_build_role_links {
+    enforcer_build_role_links_raise(enforcer)
   }
 }
 
