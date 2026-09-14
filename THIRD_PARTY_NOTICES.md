@@ -16,8 +16,11 @@
   `util/builtin_operators_test.go` (Apache-2.0). The input/expected-value
   pairs are reproduced in `functions_test.mbt` to verify behavioral
   parity. Only the test tables are reproduced; no implementation code is
-  copied. Further Casbin test cases will be listed here as they are
-  ported.
+  copied.
+- **`EscapeAssertion` / `RemoveComments` case tables** — ported from
+  Casbin's `util/util_test.go` (Apache-2.0) into `preprocess_test.mbt`.
+  Again only the input/expected-value tables are reproduced.
+- Further Casbin test cases will be listed here as they are ported.
 
 ## Runtime dependencies
 

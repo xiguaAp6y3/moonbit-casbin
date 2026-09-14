@@ -26,10 +26,14 @@ matcher 表达式求值引擎；后续将提供访问决策 API（`enforce`）�
 - **Matcher 表达式引擎**：自研词法器、Pratt 解析器与树遍历求值器，支持
   比较、`&&` / `||`（短路）、`in` 列表、字段访问、算术与字符串拼接；
   函数注册表可通过 `FunctionRegistry::add` 扩展；语法错误携带字符偏移；
+- **判定链路**：`r.sub` → `r_sub` 等预处理、内存策略存储（保序 + 去重）、
+  CSV 策略解析（RFC 4180 引号子集）、5 种 effect 聚合
+  （allow-override / deny-override / allow-and-deny / priority /
+  subjectPriority）、`Enforcer::enforce` 逐行匹配与提前终止；
 - **内置函数**：`keyMatch`、`keyGet`，用例表对齐 Casbin 官方测试；
-- **结构化错误**：配置/模型错误（`ConfigSyntax`、`ModelValidation`）与
-  matcher 错误（`MatcherSyntax`、`MatcherEval`）分类，语法错误携带行号或
-  字符偏移；
+- **结构化错误**：配置/模型/策略/匹配表达式/判定六类错误分类
+  （`ConfigSyntax`、`ModelValidation`、`PolicySyntax`、`MatcherSyntax`、
+  `MatcherEval`、`Enforcement`），语法错误携带行号或字符偏移；
 - **零依赖**：仅依赖 MoonBit 标准库，`wasm` / `wasm-gc` / `js` / `native`
   四目标通过检查、构建与测试；
 - **持续集成**：GitHub Actions 严格流水线（格式检查、`--deny-warn` 检查、
@@ -39,16 +43,18 @@ matcher 表达式求值引擎；后续将提供访问决策 API（`enforce`）�
 
 `moonbit-casbin` is a Casbin-style authorization engine implemented in
 MoonBit. It loads the Casbin model configuration format (request, policy,
-and role definitions, policy effect, matchers) and ships its own matcher
-expression engine: a lexer, a Pratt parser, and a tree-walking evaluator
-with short-circuit logic, `in` lists, field access, arithmetic, and an
-extensible function registry (`keyMatch` and `keyGet` are built in). It
-will grow into a full enforcement library: effect resolution, RBAC role
-hierarchy with domains, an enforcer API, and policy storage with a CSV
-adapter. It is **not** a port of the Casbin Go source code; the model
-format and semantics are reimplemented from the public documentation. The
-library depends only on the MoonBit standard library and passes check,
-build, and test on `wasm`, `wasm-gc`, `js`, and `native`.
+and role definitions, policy effect, matchers), ships its own matcher
+expression engine (lexer, Pratt parser, tree-walking evaluator with
+short-circuit logic, `in` lists, field access, and an extensible function
+registry), and enforces requests end to end: accessor preprocessing,
+an in-memory policy store, a CSV policy adapter, the five Casbin policy
+effects, and `Enforcer::enforce` with per-row matching and early
+termination. It will grow into a full library with RBAC role hierarchy,
+management APIs, and the regex/glob/IP built-ins. It is **not** a port of
+the Casbin Go source code; the model format and semantics are
+reimplemented from the public documentation. The library depends only on
+the MoonBit standard library and passes check, build, and test on `wasm`,
+`wasm-gc`, `js`, and `native`.
 
 ## Casbin 简介
 
@@ -82,12 +88,13 @@ Casbin 是一个广泛使用的授权库，把访问控制策略从业务代码�
 | 模型配置解析（INI 方言、注释、重复节、CRLF） | 已实现并测试 |
 | 模型加载与校验（`r` / `p` / `g` / `e` / `m`） | 已实现并测试 |
 | Matcher 表达式求值（词法 / Pratt 语法 / 短路求值 / 函数注册表） | 已实现并测试 |
+| 判定链路（预处理 / 策略校验 / 逐行匹配 / 提前终止） | 已实现并测试 |
+| 策略 effect（allow-override / deny-override / allow-and-deny / priority / subjectPriority） | 已实现并测试 |
+| 内存策略存储（保序、去重）与 CSV 策略解析 | 已实现并测试 |
 | 内置函数 `keyMatch`、`keyGet` | 已实现并测试 |
-| 结构化错误（语法 / 语义分类 + 行号或偏移） | 已实现并测试 |
-| 策略 effect 求值（allow-override / deny-override / priority） | 计划中 |
+| 结构化错误（六类错误 + 行号或偏移） | 已实现并测试 |
 | RBAC 角色层级与角色域（`g` / `g2`、domain） | 计划中 |
-| Enforcer 核心 API（`enforce`、策略与角色管理） | 计划中 |
-| 内存策略存储与 CSV 文件适配器 | 计划中 |
+| 策略与角色管理 API（`add_policy`、`add_role_for_user` 等） | 计划中 |
 | 内置函数 `keyMatch2`..`keyMatch5`、`regexMatch`、`globMatch`、`ipMatch` | 计划中 |
 | CLI 工具 | 计划中 |
 
@@ -95,10 +102,11 @@ Casbin 是一个广泛使用的授权库，把访问控制策略从业务代码�
 
 当前代码（v0.2 开发中）**不包含**：
 
-- 访问决策（`enforce`）与策略存储；
-- effect 聚合与 RBAC 角色管理（`g` 函数注入）；
+- RBAC 角色管理（`g` 函数注入、角色层级与角色域）；
+- 策略与角色的增删管理 API（判定链路本身已可用，但策略只能整体加载）；
 - 正则 / glob / IP 类内置匹配函数（`regexMatch`、`keyMatch2`..`keyMatch5`、
   `globMatch`、`ipMatch`）；
+- `eval()` 内置函数、条件角色（temporal roles）与 `EnforceContext`；
 - 持久化适配器（数据库、Redis 等）与 Watcher；
 - 分布式部署、过滤器策略加载与自适应策略；
 - 策略管理 HTTP 接口或 Dashboard。
@@ -187,6 +195,32 @@ let value = parse_matcher("keyMatch(r_obj, p_obj) && !denied")
 // value == Value::Bool(true)
 ```
 
+端到端判定：模型 + 策略文本 → `enforce`。
+
+```moonbit
+let model_text =
+  #|[request_definition]
+  #|r = sub, obj, act
+  #|
+  #|[policy_definition]
+  #|p = sub, obj, act
+  #|
+  #|[policy_effect]
+  #|e = some(where (p.eft == allow))
+  #|
+  #|[matchers]
+  #|m = r.sub == p.sub && r.obj == p.obj && r.act == p.act
+
+let model = Model::from_config(Config::parse(model_text).unwrap()).unwrap()
+let enforcer = Enforcer::new(model).unwrap()
+let policy =
+  #|p, alice, data1, read
+  #|p, bob, data2, write
+enforcer.load_policy_from_text(policy).unwrap()
+assert_true(enforcer.enforce(["alice", "data1", "read"]).unwrap())
+assert_true(!enforcer.enforce(["alice", "data1", "write"]).unwrap())
+```
+
 ## 开发与验证
 
 ```sh
@@ -198,10 +232,10 @@ moon package --list                   # 打包清单
 
 ## 测试结果
 
-- 具名测试：42 个（配置解析 10、模型加载 8、词法 5、语法 6、求值 8、
-  内置函数 5）；
-- `keyMatch` / `keyGet` 用例表移植自 Casbin 官方测试，逐项来源见
-  `THIRD_PARTY_NOTICES.md`；
+- 具名测试：71 个（配置解析 10、模型加载 8、词法 5、语法 6、求值 8、
+  内置函数 5、预处理 4、effect 5、策略存储 4、CSV 适配器 4、判定 12）；
+- `keyMatch` / `keyGet` 用例表与 `EscapeAssertion` / `RemoveComments`
+  用例表移植自 Casbin 官方测试，逐项来源见 `THIRD_PARTY_NOTICES.md`；
 - `wasm` / `wasm-gc` / `js` / `native` 四目标：`check` / `build` / `test`
   均通过，0 errors，0 warnings。
 
@@ -212,12 +246,17 @@ moon package --list                   # 打包清单
 ├── error.mbt                结构化错误类型
 ├── config.mbt               模型配置解析
 ├── model.mbt                模型加载与校验
+├── preprocess.mbt           matcher/effect 文本预处理
 ├── value.mbt                求值器的运行时值模型
 ├── expr.mbt                 matcher 表达式 AST
 ├── lexer.mbt                matcher 词法器
 ├── parser.mbt               matcher Pratt 解析器
 ├── eval.mbt                 matcher 求值器
 ├── functions.mbt            函数注册表与内置函数
+├── effect.mbt               policy effect 与效果聚合
+├── policy.mbt               内存策略存储
+├── adapter_csv.mbt          CSV 策略解析
+├── enforcer.mbt             判定核心
 ├── *_test.mbt               黑盒测试（含 lexer_wbtest.mbt 白盒测试）
 ├── moon.mod / moon.pkg      模块清单
 └── LICENSE / README.md
@@ -226,10 +265,10 @@ moon package --list                   # 打包清单
 ## Roadmap
 
 - v0.1：配置解析、模型加载、结构化错误、CI。
-- v0.2（开发中）：matcher 表达式引擎（词法、Pratt 语法、求值、函数注册表）
-  已完成；策略 effect 求值、内存策略存储与 CSV 适配器进行中。
-- v0.3：Enforcer 核心 API（`enforce`、策略与角色管理）、RBAC 角色层级
-  与角色域。
+- v0.2（开发中）：matcher 表达式引擎、判定链路（预处理、策略存储、CSV
+  适配器、effect 聚合、`enforce`）已完成；RBAC 角色管理与策略管理 API
+  进行中。
+- v0.3：RBAC 角色层级与角色域、策略与角色管理 API。
 - v0.4：内置匹配函数补齐（`keyMatch2`..`keyMatch5`、`regexMatch`、
   `globMatch`、`ipMatch`）、CLI 工具、示例工程。
 
