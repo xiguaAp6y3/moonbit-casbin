@@ -1,0 +1,5 @@
+import {
+  "xiguaAp6y3/moonbit-casbin" @casbin,
+}
+
+pkgtype(kind: "executable")
