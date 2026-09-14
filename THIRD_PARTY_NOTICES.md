@@ -26,12 +26,23 @@
   `TestImplicitPermissionAPI` sequences from `rbac_api_test.go`
   (Apache-2.0) are reproduced as fixtures and expectations in
   `rbac_api_test.mbt`.
+- **Extended operator case tables** — the `TestKeyMatch2`, `TestKeyMatch3`,
+  `TestKeyMatch4`, `TestKeyMatch5`, `TestKeyGet2`, `TestKeyGet3`,
+  `TestRegexMatch`, `TestGlobMatch`, and `TestIPMatch` tables from Casbin's
+  `util/builtin_operators_test.go` (Apache-2.0) are reproduced in
+  `builtin_operators_test.mbt` and `ip_test.mbt`. Only the test tables are
+  reproduced; the operators are implemented from the documented rewrite
+  rules, not translated from the Go source.
 - Further Casbin test cases will be listed here as they are ported.
 
 ## Runtime dependencies
 
-None beyond the MoonBit standard library (`moonbitlang/core`), which is
-distributed under the Apache-2.0 license by MoonBit.
+- **moonbitlang/core** — Apache-2.0, the MoonBit standard library.
+- **moonbitlang/regexp@0.3.5** — Apache-2.0,
+  https://github.com/moonbitlang/regexp.mbt. The official MoonBit regular
+  expression engine, used by the `regexMatch`, `keyMatch2`..`keyMatch5`,
+  `keyGet2` / `keyGet3`, and `globMatch` operators. Consumed as a
+  dependency; no code is copied from it.
 
 ## Scope of this notice
 

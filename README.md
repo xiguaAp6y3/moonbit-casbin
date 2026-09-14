@@ -35,12 +35,15 @@ matcher 表达式求值引擎；后续将提供访问决策 API（`enforce`）�
   重建（可关闭）；
 - **管理 API**：策略与角色增删查（含空串通配的过滤查询）、隐式角色与隐式
   权限查询、`delete_user` / `delete_role` 级联删除；
-- **内置函数**：`keyMatch`、`keyGet`，用例表对齐 Casbin 官方测试；
+- **内置函数**：`keyMatch` / `keyMatch2`..`keyMatch5`、`keyGet` /
+  `keyGet2` / `keyGet3`、`regexMatch`、`globMatch`、`ipMatch`（IPv4/IPv6 +
+  CIDR），用例表对齐 Casbin 官方测试；
 - **结构化错误**：配置/模型/策略/匹配表达式/判定六类错误分类
   （`ConfigSyntax`、`ModelValidation`、`PolicySyntax`、`MatcherSyntax`、
   `MatcherEval`、`Enforcement`），语法错误携带行号或字符偏移；
-- **零依赖**：仅依赖 MoonBit 标准库，`wasm` / `wasm-gc` / `js` / `native`
-  四目标通过检查、构建与测试；
+- **依赖精简**：仅依赖 MoonBit 标准库与官方 `moonbitlang/regexp`
+  （Apache-2.0），`wasm` / `wasm-gc` / `js` / `native` 四目标通过检查、
+  构建与测试；
 - **持续集成**：GitHub Actions 严格流水线（格式检查、`--deny-warn` 检查、
   四目标构建与测试、打包清单）。
 
@@ -54,14 +57,17 @@ short-circuit logic, `in` lists, field access, and an extensible function
 registry), enforces requests end to end (accessor preprocessing, an
 in-memory policy store, a CSV policy adapter, the five Casbin policy
 effects, and `Enforcer::enforce` with per-row matching and early
-termination), and implements RBAC: role hierarchy with a configurable
-depth limit, role domains, `g` / `g2` function injection, plus the
-management APIs for policies, roles, implicit roles, implicit permissions,
-and cascading deletes. It will grow the regex/glob/IP built-ins and a CLI.
-It is **not** a port of the Casbin Go source code; the model format and
-semantics are reimplemented from the public documentation. The library
-depends only on the MoonBit standard library and passes check, build, and
-test on `wasm`, `wasm-gc`, `js`, and `native`.
+termination), implements RBAC (role hierarchy with a configurable depth
+limit, role domains, `g` / `g2` function injection, management APIs for
+policies, roles, implicit roles, implicit permissions, and cascading
+deletes), and provides the full built-in operator set: `keyMatch` /
+`keyMatch2`..`keyMatch5`, `keyGet` / `keyGet2` / `keyGet3`, `regexMatch`,
+`globMatch`, and `ipMatch` for IPv4/IPv6 with CIDR. It is **not** a port
+of the Casbin Go source code; the model format and semantics are
+reimplemented from the public documentation. The library depends only on
+the MoonBit standard library and the official `moonbitlang/regexp`
+package, and passes check, build, and test on `wasm`, `wasm-gc`, `js`,
+and `native`.
 
 ## Casbin 简介
 
@@ -100,18 +106,16 @@ Casbin 是一个广泛使用的授权库，把访问控制策略从业务代码�
 | RBAC 角色层级与角色域（`g` / `g2`、domain、层级上限） | 已实现并测试 |
 | 策略与角色管理 API（增删查、通配过滤、隐式角色与权限、级联删除） | 已实现并测试 |
 | 内存策略存储（保序、去重）与 CSV 策略解析 | 已实现并测试 |
-| 内置函数 `keyMatch`、`keyGet` | 已实现并测试 |
+| 内置函数 `keyMatch` / `keyMatch2`..`keyMatch5`、`keyGet` / `keyGet2` / `keyGet3` | 已实现并测试 |
+| 内置函数 `regexMatch`、`globMatch`、`ipMatch`（IPv4/IPv6 + CIDR） | 已实现并测试 |
 | 结构化错误（六类错误 + 行号或偏移） | 已实现并测试 |
-| 内置函数 `keyMatch2`..`keyMatch5`、`regexMatch`、`globMatch`、`ipMatch` | 计划中 |
 | 角色名模式匹配（`AddMatchingFunc` / 域匹配函数） | 计划中 |
 | CLI 工具 | 计划中 |
 
 ## 不支持内容
 
-当前代码（v0.3）**不包含**：
+当前代码（v0.4）**不包含**：
 
-- 正则 / glob / IP 类内置匹配函数（`regexMatch`、`keyMatch2`..`keyMatch5`、
-  `globMatch`、`ipMatch`）；
 - 角色名模式匹配（Casbin 的 `AddMatchingFunc` / `AddDomainMatchingFunc`）：
   `has_link` 按名字精确比较；
 - `eval()` 内置函数、条件角色（temporal roles）与 `EnforceContext`；
@@ -273,14 +277,22 @@ moon test --target all --deny-warn    # 四目标测试
 moon package --list                   # 打包清单
 ```
 
+可运行示例：
+
+```sh
+moon run examples/quickstart   # ACL / RBAC / 管理 API
+moon run examples/matchers     # keyMatch2 / regexMatch / ipMatch / globMatch
+```
+
 ## 测试结果
 
-- 具名测试：83 个（配置解析 10、模型加载 8、词法 5、语法 6、求值 8、
+- 具名测试：97 个（配置解析 10、模型加载 8、词法 5、语法 6、求值 8、
   内置函数 5、预处理 4、effect 5、策略存储 4、CSV 适配器 4、判定 12、
-  角色管理器 5、RBAC 端到端 7）；
-- `keyMatch` / `keyGet` 用例表、`EscapeAssertion` / `RemoveComments`
-  用例表、RBAC 模型与角色 API 链路均移植自 Casbin 官方测试与示例，逐项
-  来源见 `THIRD_PARTY_NOTICES.md`；
+  角色管理器 5、RBAC 端到端 7、扩展运算符 11、IP 3）；
+- `keyMatch` / `keyGet`、`keyMatch2`..`keyMatch5` / `keyGet2` / `keyGet3` /
+  `regexMatch` / `globMatch` / `ipMatch` 用例表、`EscapeAssertion` /
+  `RemoveComments` 用例表、RBAC 模型与角色 API 链路均移植自 Casbin 官方
+  测试与示例，逐项来源见 `THIRD_PARTY_NOTICES.md`；
 - `wasm` / `wasm-gc` / `js` / `native` 四目标：`check` / `build` / `test`
   均通过，0 errors，0 warnings。
 
@@ -288,6 +300,7 @@ moon package --list                   # 打包清单
 
 ```
 ├── .github/workflows/       CI 与发布流水线
+├── examples/                可运行示例（quickstart、matchers）
 ├── error.mbt                结构化错误类型
 ├── config.mbt               模型配置解析
 ├── model.mbt                模型加载与校验
@@ -297,7 +310,9 @@ moon package --list                   # 打包清单
 ├── lexer.mbt                matcher 词法器
 ├── parser.mbt               matcher Pratt 解析器
 ├── eval.mbt                 matcher 求值器
-├── functions.mbt            函数注册表与内置函数
+├── functions.mbt            函数注册表与内置函数入口
+├── builtin_operators.mbt    正则/glob 类内置运算符
+├── ip.mbt                   IPv4/IPv6 与 CIDR 匹配
 ├── effect.mbt               policy effect 与效果聚合
 ├── policy.mbt               内存策略存储
 ├── adapter_csv.mbt          CSV 策略解析
@@ -314,12 +329,13 @@ moon package --list                   # 打包清单
 - v0.1：配置解析、模型加载、结构化错误、CI。
 - v0.2：matcher 表达式引擎、判定链路（预处理、策略存储、CSV 适配器、
   effect 聚合、`enforce`）。
-- v0.3（当前）：RBAC 角色层级与角色域、`g` / `g2` 注入、策略与角色管理
-  API、隐式角色与权限、级联删除。
-- v0.4：内置匹配函数补齐（`keyMatch2`..`keyMatch5`、`regexMatch`、
-  `globMatch`、`ipMatch`）、CLI 工具、示例工程。
+- v0.3：RBAC 角色层级与角色域、`g` / `g2` 注入、策略与角色管理 API、
+  隐式角色与权限、级联删除。
+- v0.4（当前）：内置匹配函数补齐（`keyMatch2`..`keyMatch5`、`keyGet2` /
+  `keyGet3`、`regexMatch`、`globMatch`、`ipMatch`）与两个可运行示例。
 
-v0.4 是未来计划，尚未完成。
+后续计划（尚未开始）：CLI 工具、持久化适配器、角色名模式匹配、`eval()`
+与 `EnforceContext`。
 
 ## 移植说明
 
