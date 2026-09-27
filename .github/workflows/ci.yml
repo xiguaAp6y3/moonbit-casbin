@@ -27,5 +27,11 @@ jobs:
         run: moon build --target all
       - name: Strict tests
         run: moon test --target all --deny-warn
+      - name: Runnable examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          moon run examples/quickstart
+          moon run examples/matchers
       - name: Package manifest
         run: moon package --list

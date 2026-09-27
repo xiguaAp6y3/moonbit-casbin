@@ -300,6 +300,7 @@ moon run examples/matchers     # keyMatch2 / regexMatch / ipMatch / globMatch
 
 ```
 ├── .github/workflows/       CI 与发布流水线
+├── docs/                    架构、复现与测试矩阵
 ├── examples/                可运行示例（quickstart、matchers）
 ├── error.mbt                结构化错误类型
 ├── config.mbt               模型配置解析
