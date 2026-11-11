@@ -14,11 +14,20 @@
 ///|
 /// One assertion in the model: a definition (`r`, `p`, `g`) or an
 /// expression (`e`, `m`).
+#derive(Eq, Debug)
 pub(all) struct Assertion {
   key : String
   value : String
   tokens : Array[String]
-} derive(Eq, Debug)
+}
+
+// E0079: derived trait methods stay reachable with dot syntax.
+
+///|
+pub extend Assertion with Eq::{not_equal, equal}
+
+///|
+pub extend Assertion with @moonbitlang/core/debug.Debug::{to_repr}
 
 ///|
 /// The assertion key, for example `r`, `p`, `g`, `e`, or `m`.
@@ -42,13 +51,19 @@ pub fn Assertion::tokens(self : Assertion) -> Array[String] {
 ///|
 /// Loaded Casbin model: request, policy, and role definitions, the
 /// policy effect, and matcher expressions.
+#derive(Debug)
 pub(all) struct Model {
   request : Array[Assertion]
   policy : Array[Assertion]
   role : Array[Assertion]
   effect : Assertion?
   matcher : Array[Assertion]
-} derive(Debug)
+}
+
+// E0079: derived trait methods stay reachable with dot syntax.
+
+///|
+pub extend Model with @moonbitlang/core/debug.Debug::{to_repr}
 
 ///|
 /// Builds a model from parsed configuration.

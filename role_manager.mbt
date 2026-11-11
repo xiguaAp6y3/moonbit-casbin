@@ -38,24 +38,24 @@ pub(all) struct RoleGraph {
 /// A role manager holding one graph per domain.
 pub(all) struct RoleManager {
   graphs : Array[(String, RoleGraph)]
-  max_hierarchy_level : Int
+  max_hierarchy_level : Int32
 }
 
 ///|
 /// The maximum hierarchy level used by Casbin's default role managers.
-pub let default_max_hierarchy_level : Int = 10
+pub let default_max_hierarchy_level : Int32 = 10
 
 ///|
 /// Creates an empty role manager.
 pub fn RoleManager::new(
-  max_hierarchy_level? : Int = default_max_hierarchy_level,
+  max_hierarchy_level~ : Int32 = default_max_hierarchy_level,
 ) -> RoleManager {
   { graphs: [], max_hierarchy_level, }
 }
 
 ///|
 /// The configured maximum hierarchy level.
-pub fn RoleManager::max_hierarchy_level(self : RoleManager) -> Int {
+pub fn RoleManager::max_hierarchy_level(self : RoleManager) -> Int32 {
   self.max_hierarchy_level
 }
 
@@ -66,7 +66,7 @@ pub fn RoleManager::add_link(
   self : RoleManager,
   user : String,
   role : String,
-  domain? : String = "",
+  domain~ : String = "",
 ) -> Unit {
   let graph = self.ensure_graph(domain)
   let user_node = graph.nodes[graph.ensure_node(user)]
@@ -86,7 +86,7 @@ pub fn RoleManager::delete_link(
   self : RoleManager,
   user : String,
   role : String,
-  domain? : String = "",
+  domain~ : String = "",
 ) -> Bool {
   let graph = match self.graph(domain) {
     Some(graph) => graph
@@ -113,7 +113,7 @@ pub fn RoleManager::has_link(
   self : RoleManager,
   name1 : String,
   name2 : String,
-  domain? : String = "",
+  domain~ : String = "",
 ) -> Bool {
   if name1 == name2 {
     return true
@@ -151,7 +151,7 @@ pub fn RoleManager::has_link(
 pub fn RoleManager::get_roles(
   self : RoleManager,
   name : String,
-  domain? : String = "",
+  domain~ : String = "",
 ) -> Array[String] {
   match self.graph(domain) {
     Some(graph) =>
@@ -168,7 +168,7 @@ pub fn RoleManager::get_roles(
 pub fn RoleManager::get_users(
   self : RoleManager,
   name : String,
-  domain? : String = "",
+  domain~ : String = "",
 ) -> Array[String] {
   match self.graph(domain) {
     Some(graph) =>
@@ -186,7 +186,7 @@ pub fn RoleManager::get_users(
 pub fn RoleManager::get_implicit_roles(
   self : RoleManager,
   name : String,
-  domain? : String = "",
+  domain~ : String = "",
 ) -> Array[String] {
   self.collect_implicit(name, domain, true)
 }
@@ -197,7 +197,7 @@ pub fn RoleManager::get_implicit_roles(
 pub fn RoleManager::get_implicit_users(
   self : RoleManager,
   name : String,
-  domain? : String = "",
+  domain~ : String = "",
 ) -> Array[String] {
   self.collect_implicit(name, domain, false)
 }
@@ -272,7 +272,7 @@ fn RoleManager::ensure_graph(self : RoleManager, domain : String) -> RoleGraph {
 }
 
 ///|
-fn RoleGraph::find(self : RoleGraph, name : String) -> Int? {
+fn RoleGraph::find(self : RoleGraph, name : String) -> Int32? {
   for i in 0..<self.nodes.length() {
     if self.nodes[i].name == name {
       return Some(i)
@@ -282,7 +282,7 @@ fn RoleGraph::find(self : RoleGraph, name : String) -> Int? {
 }
 
 ///|
-fn RoleGraph::ensure_node(self : RoleGraph, name : String) -> Int {
+fn RoleGraph::ensure_node(self : RoleGraph, name : String) -> Int32 {
   match self.find(name) {
     Some(index) => index
     None => {

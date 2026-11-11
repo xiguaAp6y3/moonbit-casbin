@@ -232,7 +232,7 @@ fn eval_arithmetic(
 fn numeric_binary(
   a : Value,
   b : Value,
-  int_op : (Int, Int) -> Int,
+  int_op : (Int32, Int32) -> Int32,
   double_op : (Double, Double) -> Double,
   name : String,
 ) -> Value raise CasbinError {
@@ -252,7 +252,7 @@ fn numeric_binary(
 }
 
 ///|
-fn compare_values(a : Value, b : Value) -> Int raise CasbinError {
+fn compare_values(a : Value, b : Value) -> Int32 raise CasbinError {
   match (a, b) {
     (Value::Int(x), Value::Int(y)) => compare_int(x, y)
     (Value::Double(x), Value::Double(y)) => compare_double(x, y)
@@ -299,7 +299,7 @@ fn find_field(fields : Array[(String, Value)], name : String) -> Value? {
 }
 
 ///|
-fn add_int(x : Int, y : Int) -> Int {
+fn add_int(x : Int32, y : Int32) -> Int32 {
   x + y
 }
 
@@ -309,7 +309,7 @@ fn add_double(x : Double, y : Double) -> Double {
 }
 
 ///|
-fn sub_int(x : Int, y : Int) -> Int {
+fn sub_int(x : Int32, y : Int32) -> Int32 {
   x - y
 }
 
@@ -319,7 +319,7 @@ fn sub_double(x : Double, y : Double) -> Double {
 }
 
 ///|
-fn mul_int(x : Int, y : Int) -> Int {
+fn mul_int(x : Int32, y : Int32) -> Int32 {
   x * y
 }
 
@@ -329,7 +329,7 @@ fn mul_double(x : Double, y : Double) -> Double {
 }
 
 ///|
-fn compare_int(x : Int, y : Int) -> Int {
+fn compare_int(x : Int32, y : Int32) -> Int32 {
   if x < y {
     -1
   } else if x == y {
@@ -340,7 +340,7 @@ fn compare_int(x : Int, y : Int) -> Int {
 }
 
 ///|
-fn compare_double(x : Double, y : Double) -> Int {
+fn compare_double(x : Double, y : Double) -> Int32 {
   if x < y {
     -1
   } else if x == y {
@@ -351,7 +351,7 @@ fn compare_double(x : Double, y : Double) -> Int {
 }
 
 ///|
-fn compare_string(x : String, y : String) -> Int {
+fn compare_string(x : String, y : String) -> Int32 {
   if x < y {
     -1
   } else if x == y {

@@ -12,9 +12,13 @@ fn check_operator(
   key2 : String,
   expected : Bool,
 ) -> Unit raise {
-  match try_call(name, [Value::String(key1), Value::String(key2)]) {
+  match
+    try_call(name, [
+      @moonbit-casbin.Value::String(key1),
+      @moonbit-casbin.Value::String(key2),
+    ]) {
     Ok(value) =>
-      if value != Value::Bool(expected) {
+      if value != @moonbit-casbin.Value::Bool(expected) {
         fail(
           name +
           "(\"" +
@@ -41,12 +45,12 @@ fn check_get_operator(
 ) -> Unit raise {
   match
     try_call(name, [
-      Value::String(key1),
-      Value::String(key2),
-      Value::String(path_var),
+      @moonbit-casbin.Value::String(key1),
+      @moonbit-casbin.Value::String(key2),
+      @moonbit-casbin.Value::String(path_var),
     ]) {
     Ok(value) =>
-      if value != Value::String(expected) {
+      if value != @moonbit-casbin.Value::String(expected) {
         fail(
           name +
           "(\"" +
@@ -337,14 +341,21 @@ test "globMatch supports classes and alternation" {
 ///|
 test "regex operators reject invalid patterns" {
   match
-    try_call("regexMatch", [Value::String("/foo"), Value::String("[unclosed")]) {
+    try_call("regexMatch", [
+      @moonbit-casbin.Value::String("/foo"),
+      @moonbit-casbin.Value::String("[unclosed"),
+    ]) {
     Err(error) => {
       assert_true(error.kind() == MatcherEval)
       assert_true(error.message().contains("invalid regular expression"))
     }
     Ok(_) => fail("expected a MatcherEval error")
   }
-  match try_call("globMatch", [Value::String("/foo"), Value::String("/foo[")]) {
+  match
+    try_call("globMatch", [
+      @moonbit-casbin.Value::String("/foo"),
+      @moonbit-casbin.Value::String("/foo["),
+    ]) {
     Err(error) => assert_true(error.message().contains("unterminated"))
     Ok(_) => fail("expected a MatcherEval error")
   }
@@ -352,11 +363,15 @@ test "regex operators reject invalid patterns" {
 
 ///|
 test "extended operators validate their arguments" {
-  match try_call("keyMatch2", [Value::String("/foo")]) {
+  match try_call("keyMatch2", [@moonbit-casbin.Value::String("/foo")]) {
     Err(error) => assert_true(error.message().contains("expected 2 arguments"))
     Ok(_) => fail("expected a MatcherEval error")
   }
-  match try_call("keyGet2", [Value::String("/foo"), Value::String("/:id")]) {
+  match
+    try_call("keyGet2", [
+      @moonbit-casbin.Value::String("/foo"),
+      @moonbit-casbin.Value::String("/:id"),
+    ]) {
     Err(error) => assert_true(error.message().contains("expected 3 arguments"))
     Ok(_) => fail("expected a MatcherEval error")
   }

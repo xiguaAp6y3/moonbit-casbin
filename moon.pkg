@@ -1,4 +1,11 @@
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/hashmap",
   "moonbitlang/regexp",
 }
+
+// `Result[T, CasbinError]` is this library's documented error contract: callers
+// inspect the structured error (kind / line / offset) as ordinary data, so the
+// `result_error_return` style lint (prefer `T raise E`) does not apply here.
+
+warnings = "-result_error_return"

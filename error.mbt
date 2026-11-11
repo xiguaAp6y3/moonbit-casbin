@@ -13,6 +13,7 @@
 
 ///|
 /// The broad category of a `CasbinError`.
+#derive(Eq, Debug)
 pub(all) enum CasbinErrorKind {
   /// The configuration text is malformed.
   ConfigSyntax
@@ -26,12 +27,20 @@ pub(all) enum CasbinErrorKind {
   MatcherEval
   /// An enforcement request is inconsistent with the model or the policy.
   Enforcement
-} derive(Eq, Debug)
+}
+
+// E0079: derived trait methods stay reachable with dot syntax.
+
+///|
+pub extend CasbinErrorKind with Eq::{not_equal, equal}
+
+///|
+pub extend CasbinErrorKind with @moonbitlang/core/debug.Debug::{to_repr}
 
 ///|
 /// A structured error returned by every public API and raised internally.
 pub(all) suberror CasbinError {
-  CasbinError(CasbinErrorKind, String, Int, Int)
+  CasbinError(CasbinErrorKind, String, Int32, Int32)
 }
 
 ///|
@@ -44,7 +53,7 @@ pub fn casbin_error(kind : CasbinErrorKind, message : String) -> CasbinError {
 /// Constructs a `CasbinError` carrying the 1-based configuration line.
 pub fn casbin_error_at(
   kind : CasbinErrorKind,
-  line : Int,
+  line : Int32,
   message : String,
 ) -> CasbinError {
   CasbinError(kind, message, line, 0)
@@ -55,7 +64,7 @@ pub fn casbin_error_at(
 /// expression.
 pub fn casbin_error_at_offset(
   kind : CasbinErrorKind,
-  offset : Int,
+  offset : Int32,
   message : String,
 ) -> CasbinError {
   CasbinError(kind, message, 0, offset)
@@ -77,7 +86,7 @@ pub fn CasbinError::message(self : CasbinError) -> String {
 
 ///|
 /// The 1-based configuration line, or `0` when not meaningful.
-pub fn CasbinError::line(self : CasbinError) -> Int {
+pub fn CasbinError::line(self : CasbinError) -> Int32 {
   let CasbinError(_, _, line, _) = self
   line
 }
@@ -85,7 +94,7 @@ pub fn CasbinError::line(self : CasbinError) -> Int {
 ///|
 /// The 0-based character offset in an expression, or `0` when not
 /// meaningful.
-pub fn CasbinError::offset(self : CasbinError) -> Int {
+pub fn CasbinError::offset(self : CasbinError) -> Int32 {
   let CasbinError(_, _, _, offset) = self
   offset
 }

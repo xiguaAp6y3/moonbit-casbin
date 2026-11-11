@@ -45,7 +45,8 @@ matcher 表达式求值引擎；后续将提供访问决策 API（`enforce`）�
   （Apache-2.0），`wasm` / `wasm-gc` / `js` / `native` 四目标通过检查、
   构建与测试；
 - **持续集成**：GitHub Actions 严格流水线（格式检查、`--deny-warn` 检查、
-  四目标构建与测试、打包清单）。
+  四目标构建与测试、两示例运行、打包清单），CI 固定已验证的工具链版本，
+  并每周用最新发布版跑一次前向兼容预警；
 
 ## English Summary
 
@@ -127,13 +128,47 @@ Casbin 是一个广泛使用的授权库，把访问控制策略从业务代码�
 上表"计划中"的能力按 `Roadmap` 逐步实现；在实现之前，README 与发布说明
 不会声称支持。
 
+## 工具链兼容性
+
+本项目在以下官方发布工具链上完成验证（`moon version --all` 原样输出，Windows
+x86-64 本机）：
+
+```
+moon 0.1.20261104 (940aa18 2026-11-04) ~\.moon\bin\moon.exe
+moonc v0.10.20+65efd5b93 (2026-11-05) ~\.moon\bin\moonc.exe
+moonrun 0.1.20261104 (940aa18 2026-11-04) ~\.moon\bin\moonrun.exe
+
+Feature flags enabled: rr_moon_mod,rr_moon_pkg
+```
+
+- 安装与更新方式见 <https://www.moonbitlang.com/download/>。Windows 可直接下载
+  `https://cli.moonbitlang.com/binaries/<version>/moonbit-windows-x86_64.zip`
+  解压覆盖 `~/.moon`；标准库 `core` 还需单独下载
+  `https://cli.moonbitlang.com/cores/core-<version>.tar.gz` 解压到 `~/.moon/lib`
+  后执行 `moon -C ~/.moon/lib/core bundle --warn-list -a --all`；
+- 清单格式为 `moon.mod` / `moon.pkg`。自 0.10.19 起 JSON 清单
+  （`moon.mod.json` / `moon.pkg.json`）不再被接受，`moon fmt` 提供迁移入口；
+- 依赖为 `moonbitlang/regexp@0.3.7`：`0.3.5` 及更早版本只带 JSON 清单，在新
+  工具链下无法安装，因此不能沿用旧版本号；
+- 已随工具链升级同步适配的源码项：`derive(...)` → `#derive(...)`、
+  `String::sub` → `String::exact_view`、派生 trait 方法改用显式
+  `pub extend`（警告 E0079）；
+- 警告 `result_error_return`（E0078，建议 `T raise E`）在 `moon.pkg` 中定向
+  关闭：本库把 `CasbinError`（`kind` / `line` / `offset`）作为普通数据返回，
+  是 README 与 API 文档声明的错误契约，不适用该风格建议；
+- 内置 `core` 与 `moonbitlang/regexp` 均需显式 `import`（新工具链不再隐式
+  注入）；四目标 `check` / `build` / `test` 均为 0 errors、0 warnings。
+
 ## 本地使用方式
 
-环境要求：MoonBit 工具链（含 `wasm` / `wasm-gc` / `js` / `native` 目标）。
+环境要求：MoonBit 工具链 0.10.20 或更高（2026-11-05 起），含 `wasm` /
+`wasm-gc` / `js` / `native` 目标；不支持旧版 JSON 清单（`moon.mod.json`）的
+工具链无法构建本项目。
 
 ```sh
 git clone https://github.com/xiguaAp6y3/moonbit-casbin.git
 cd moonbit-casbin
+moon update      # 刷新注册表索引并解析依赖
 moon test
 ```
 
@@ -284,17 +319,28 @@ moon run examples/quickstart   # ACL / RBAC / 管理 API
 moon run examples/matchers     # keyMatch2 / regexMatch / ipMatch / globMatch
 ```
 
+本文档"快速开始"中的代码片段由 `readme_examples/` 逐条编译执行（`moon test`
+自动包含），改文档或改 API 时都会立即暴露不一致。
+
 ## 测试结果
 
 - 具名测试：97 个（配置解析 10、模型加载 8、词法 5、语法 6、求值 8、
   内置函数 5、预处理 4、effect 5、策略存储 4、CSV 适配器 4、判定 12、
   角色管理器 5、RBAC 端到端 7、扩展运算符 11、IP 3）；
+- README 代码片段一致性测试 6 个（`readme_examples/`）：本文档"快速开始"
+  的五段示例与错误消息断言逐条编译执行，文档示例不会与实现漂移；
 - `keyMatch` / `keyGet`、`keyMatch2`..`keyMatch5` / `keyGet2` / `keyGet3` /
   `regexMatch` / `globMatch` / `ipMatch` 用例表、`EscapeAssertion` /
   `RemoveComments` 用例表、RBAC 模型与角色 API 链路均移植自 Casbin 官方
   测试与示例，逐项来源见 `THIRD_PARTY_NOTICES.md`；
 - `wasm` / `wasm-gc` / `js` / `native` 四目标：`check` / `build` / `test`
-  均通过，0 errors，0 warnings。
+  均通过，0 errors，0 warnings（四目标各 103/103 通过，即 97 个库测试 +
+  6 个文档片段测试，`moon test --target all --deny-warn`）；
+- 两个可运行示例在四目标下均可构建，`moon run examples/quickstart` /
+  `moon run examples/matchers` 输出与上文一致；
+- 验证工具链：`moon 0.1.20261104` / `moonc v0.10.20+65efd5b93`（2026-11-05），
+  详见"工具链兼容性"一节；CI 固定该版本，并额外用每周定时任务跑最新
+  发布版做前向兼容预警。
 
 ## 目录结构
 
@@ -302,6 +348,7 @@ moon run examples/matchers     # keyMatch2 / regexMatch / ipMatch / globMatch
 ├── .github/workflows/       CI 与发布流水线
 ├── docs/                    架构、复现与测试矩阵
 ├── examples/                可运行示例（quickstart、matchers）
+├── readme_examples/         本文档代码片段的一致性测试
 ├── error.mbt                结构化错误类型
 ├── config.mbt               模型配置解析
 ├── model.mbt                模型加载与校验

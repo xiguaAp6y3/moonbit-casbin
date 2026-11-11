@@ -11,7 +11,7 @@
 pub(all) struct PolicySection {
   key : String
   rows : Array[Array[String]]
-  index : @hashmap.HashMap[String, Int]
+  index : @hashmap.HashMap[String, Int32]
 }
 
 ///|
@@ -127,7 +127,7 @@ pub fn PolicyStore::clear(self : PolicyStore) -> Unit {
 }
 
 ///|
-fn PolicyStore::find_section(self : PolicyStore, key : String) -> Int? {
+fn PolicyStore::find_section(self : PolicyStore, key : String) -> Int32? {
   for i in 0..<self.sections.length() {
     if self.sections[i].key == key {
       return Some(i)

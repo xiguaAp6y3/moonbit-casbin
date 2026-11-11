@@ -7,17 +7,26 @@
 
 ///|
 /// A runtime value produced or consumed by the matcher evaluator.
+#derive(Eq, Debug)
 pub(all) enum Value {
   Null
   Bool(Bool)
-  Int(Int)
+  Int(Int32)
   Double(Double)
   String(String)
   Array(Array[Value])
   /// A record used for field access (ABAC-style attributes). Field lookup
   /// is linear and the first match wins.
   Object(Array[(String, Value)])
-} derive(Eq, Debug)
+}
+
+// E0079: derived trait methods stay reachable with dot syntax.
+
+///|
+pub extend Value with Eq::{not_equal, equal}
+
+///|
+pub extend Value with @moonbitlang/core/debug.Debug::{to_repr}
 
 ///|
 /// A human-readable type name used in error messages.

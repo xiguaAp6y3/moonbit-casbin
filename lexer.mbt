@@ -8,9 +8,10 @@
 // character so syntax errors can point at the offending position.
 
 ///|
+#derive(Eq)
 priv enum TokenKind {
   Ident(String)
-  IntValue(Int)
+  IntValue(Int32)
   DoubleValue(Double)
   Str(String)
   True
@@ -36,12 +37,12 @@ priv enum TokenKind {
   RBracket
   Comma
   Dot
-} derive(Eq)
+}
 
 ///|
 priv struct Token {
   kind : TokenKind
-  offset : Int
+  offset : Int32
 }
 
 ///|
@@ -232,8 +233,8 @@ fn tokenize(text : String) -> Array[Token] raise CasbinError {
 /// `\` escapes the next character; an unterminated literal raises.
 fn read_string(
   chars : Array[Char],
-  start : Int,
-) -> (String, Int) raise CasbinError {
+  start : Int32,
+) -> (String, Int32) raise CasbinError {
   let quote = chars[start]
   let length = chars.length()
   let value : Array[Char] = []
@@ -266,7 +267,7 @@ fn read_string(
 }
 
 ///|
-fn slice_to_string(chars : Array[Char], start : Int, end : Int) -> String {
+fn slice_to_string(chars : Array[Char], start : Int32, end : Int32) -> String {
   let slice : Array[Char] = []
   for i in start..<end {
     slice.push(chars[i])
@@ -285,7 +286,7 @@ fn is_identifier_char(ch : Char) -> Bool {
 }
 
 ///|
-fn power_of_ten(exponent : Int) -> Double {
+fn power_of_ten(exponent : Int32) -> Double {
   let mut result = 1.0
   for _i in 0..<exponent {
     result = result * 10.0

@@ -31,7 +31,7 @@ let domain_rbac_model_text =
   #|m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && r.obj == p.obj && r.act == p.act
 
 ///|
-fn build_rbac_enforcer() -> Enforcer {
+fn build_rbac_enforcer() -> @moonbit-casbin.Enforcer {
   let enforcer = build_enforcer(rbac_model_text)
   enforcer.load_policy_from_text(rbac_policy_text).unwrap()
   enforcer

@@ -27,12 +27,12 @@ pub fn parse_matcher(text : String) -> Result[Expr, CasbinError] {
 ///|
 priv struct Parser {
   tokens : Array[Token]
-  end_offset : Int
-  mut pos : Int
+  end_offset : Int32
+  mut pos : Int32
 }
 
 ///|
-fn Parser::new(tokens : Array[Token], end_offset : Int) -> Parser {
+fn Parser::new(tokens : Array[Token], end_offset : Int32) -> Parser {
   { tokens, end_offset, pos: 0, }
 }
 
@@ -100,7 +100,7 @@ fn Parser::parse_expression(self : Parser) -> Expr raise CasbinError {
 ///|
 fn Parser::parse_binary(
   self : Parser,
-  min_precedence : Int,
+  min_precedence : Int32,
 ) -> Expr raise CasbinError {
   let mut left = self.parse_unary()
   while true {
@@ -137,7 +137,7 @@ fn Parser::parse_binary(
 }
 
 ///|
-fn binary_precedence(op : BinaryOp) -> Int {
+fn binary_precedence(op : BinaryOp) -> Int32 {
   match op {
     Or => 1
     And => 2
@@ -309,7 +309,7 @@ fn Parser::parse_bracket_list(self : Parser) -> Expr raise CasbinError {
 }
 
 ///|
-fn Parser::current_offset(self : Parser) -> Int {
+fn Parser::current_offset(self : Parser) -> Int32 {
   match self.peek() {
     Some(token) => token.offset
     None => self.end_offset

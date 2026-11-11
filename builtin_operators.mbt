@@ -347,7 +347,11 @@ fn rewrite_braces(
 }
 
 ///|
-fn first_brace_before(chars : Array[Char], start : Int, limit : Int) -> Int? {
+fn first_brace_before(
+  chars : Array[Char],
+  start : Int32,
+  limit : Int32,
+) -> Int32? {
   for i in start..<limit {
     if chars[i] == '}' {
       return Some(i)
@@ -357,8 +361,12 @@ fn first_brace_before(chars : Array[Char], start : Int, limit : Int) -> Int? {
 }
 
 ///|
-fn last_brace_before(chars : Array[Char], start : Int, limit : Int) -> Int? {
-  let mut found : Int? = None
+fn last_brace_before(
+  chars : Array[Char],
+  start : Int32,
+  limit : Int32,
+) -> Int32? {
+  let mut found : Int32? = None
   for i in start..<limit {
     if chars[i] == '}' {
       found = Some(i)

@@ -27,7 +27,7 @@ test "escape_assertion follows Casbin" {
     ("r.sub == \"test.p.value\"", "r_sub == \"test.p.value\""),
   ]
   for case in cases {
-    assert_true(escape_assertion(case.0) == case.1)
+    assert_true(@moonbit-casbin.escape_assertion(case.0) == case.1)
   }
 }
 
@@ -41,23 +41,26 @@ test "remove_comments follows Casbin" {
     ("r.act == p.act", "r.act == p.act"),
   ]
   for case in cases {
-    assert_true(remove_comments(case.0) == case.1)
+    assert_true(@moonbit-casbin.remove_comments(case.0) == case.1)
   }
 }
 
 ///|
 test "preprocess_expression escapes accessors and strips comments" {
   assert_true(
-    preprocess_expression("r.sub == p.sub # note") == "r_sub == p_sub",
+    @moonbit-casbin.preprocess_expression("r.sub == p.sub # note") ==
+    "r_sub == p_sub",
   )
   assert_true(
-    preprocess_expression("g(r.sub, p.sub) && r.obj == p.obj") ==
+    @moonbit-casbin.preprocess_expression("g(r.sub, p.sub) && r.obj == p.obj") ==
     "g(r_sub, p_sub) && r_obj == p_obj",
   )
 }
 
 ///|
 test "escape_assertion leaves identifiers and strings alone" {
-  assert_true(escape_assertion("role.sub") == "role.sub")
-  assert_true(escape_assertion("'p.x' == r.sub") == "'p.x' == r_sub")
+  assert_true(@moonbit-casbin.escape_assertion("role.sub") == "role.sub")
+  assert_true(
+    @moonbit-casbin.escape_assertion("'p.x' == r.sub") == "'p.x' == r_sub",
+  )
 }

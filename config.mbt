@@ -12,10 +12,16 @@
 
 ///|
 /// One `key = value` entry inside a configuration section.
+#derive(Debug)
 pub(all) struct ConfigEntry {
   key : String
   value : String
-} derive(Debug)
+}
+
+// E0079: derived trait methods stay reachable with dot syntax.
+
+///|
+pub extend ConfigEntry with @moonbitlang/core/debug.Debug::{to_repr}
 
 ///|
 /// The entry key.
@@ -31,16 +37,28 @@ pub fn ConfigEntry::value(self : ConfigEntry) -> String {
 
 ///|
 /// A named configuration section with its entries in declaration order.
+#derive(Debug)
 pub(all) struct ConfigSection {
   name : String
   entries : Array[ConfigEntry]
-} derive(Debug)
+}
+
+// E0079: derived trait methods stay reachable with dot syntax.
+
+///|
+pub extend ConfigSection with @moonbitlang/core/debug.Debug::{to_repr}
 
 ///|
 /// Parsed Casbin configuration (INI-style model file).
+#derive(Debug)
 pub(all) struct Config {
   sections : Array[ConfigSection]
-} derive(Debug)
+}
+
+// E0079: derived trait methods stay reachable with dot syntax.
+
+///|
+pub extend Config with @moonbitlang/core/debug.Debug::{to_repr}
 
 ///|
 /// Parses Casbin model configuration text.
@@ -57,8 +75,8 @@ pub fn Config::parse(text : String) -> Result[Config, CasbinError] {
 /// Internal: parses configuration text, raising on the first violation.
 fn parse_config_raise(text : String) -> Config raise CasbinError {
   let sections : Array[ConfigSection] = []
-  let mut current : Int = -1
-  let mut line_number : Int = 0
+  let mut current : Int32 = -1
+  let mut line_number : Int32 = 0
   for raw_line in text.split("\n") {
     line_number += 1
     let line = raw_line.trim()
@@ -73,7 +91,7 @@ fn parse_config_raise(text : String) -> Config raise CasbinError {
           "section header is missing ']'",
         )
       }
-      let name = line.sub(start=1, end=line.length() - 1).trim()
+      let name = line.exact_view(start=1, end=line.length() - 1).trim()
       if name.is_empty() {
         raise casbin_error_at(ConfigSyntax, line_number, "empty section name")
       }
@@ -160,7 +178,7 @@ pub fn Config::section_names(self : Config) -> Array[String] {
 }
 
 ///|
-fn find_section(sections : Array[ConfigSection], name : String) -> Int {
+fn find_section(sections : Array[ConfigSection], name : String) -> Int32 {
   for i in 0..<sections.length() {
     if sections[i].name == name {
       return i

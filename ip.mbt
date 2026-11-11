@@ -46,7 +46,7 @@ pub fn ip_match(ip1 : String, ip2 : String) -> Bool raise CasbinError {
 
 ///|
 /// Parses an IPv4 or IPv6 address into 4 or 16 bytes.
-fn parse_ip(text : String) -> Array[Int]? {
+fn parse_ip(text : String) -> Array[Int32]? {
   if text.contains(":") {
     parse_ipv6(text)
   } else {
@@ -55,12 +55,12 @@ fn parse_ip(text : String) -> Array[Int]? {
 }
 
 ///|
-fn parse_ipv4(text : String) -> Array[Int]? {
+fn parse_ipv4(text : String) -> Array[Int32]? {
   let parts = text.split(".").collect()
   if parts.length() != 4 {
     return None
   }
-  let bytes : Array[Int] = []
+  let bytes : Array[Int32] = []
   for part in parts {
     match parse_octet(part) {
       Some(value) => bytes.push(value)
@@ -71,7 +71,7 @@ fn parse_ipv4(text : String) -> Array[Int]? {
 }
 
 ///|
-fn parse_octet(part : StringView) -> Int? {
+fn parse_octet(part : StringView) -> Int32? {
   let chars : Array[Char] = part.iter().collect()
   if chars.length() == 0 || chars.length() > 3 {
     return None
@@ -95,12 +95,12 @@ fn parse_octet(part : StringView) -> Int? {
 ///|
 /// Parses an IPv6 address (`::` compression and an IPv4 tail are
 /// supported) into 16 bytes.
-fn parse_ipv6(text : String) -> Array[Int]? {
+fn parse_ipv6(text : String) -> Array[Int32]? {
   let parts = text.split("::").collect()
   if parts.length() > 2 {
     return None
   }
-  let mut groups : Array[Int] = []
+  let mut groups : Array[Int32] = []
   match parse_ipv6_side(parts[0]) {
     Some(left) => groups = left
     None => return None
@@ -124,7 +124,7 @@ fn parse_ipv6(text : String) -> Array[Int]? {
   } else if groups.length() != 8 {
     return None
   }
-  let bytes : Array[Int] = []
+  let bytes : Array[Int32] = []
   for group in groups {
     bytes.push(group / 256)
     bytes.push(group % 256)
@@ -135,12 +135,12 @@ fn parse_ipv6(text : String) -> Array[Int]? {
 ///|
 /// Parses one side of an IPv6 address into 16-bit groups; an IPv4 tail
 /// contributes two groups.
-fn parse_ipv6_side(part : StringView) -> Array[Int]? {
+fn parse_ipv6_side(part : StringView) -> Array[Int32]? {
   if part.is_empty() {
     return Some([])
   }
   let fields = part.split(":").collect()
-  let groups : Array[Int] = []
+  let groups : Array[Int32] = []
   for i in 0..<fields.length() {
     let field = fields[i]
     if field.is_empty() {
@@ -167,7 +167,7 @@ fn parse_ipv6_side(part : StringView) -> Array[Int]? {
 }
 
 ///|
-fn parse_hex_group(field : StringView) -> Int? {
+fn parse_hex_group(field : StringView) -> Int32? {
   let chars : Array[Char] = field.iter().collect()
   if chars.length() == 0 || chars.length() > 4 {
     return None
@@ -190,7 +190,7 @@ fn parse_hex_group(field : StringView) -> Int? {
 
 ///|
 /// Parses `<address>/<prefix>`; the prefix must fit the address family.
-fn parse_cidr(text : String) -> (Array[Int], Int)? {
+fn parse_cidr(text : String) -> (Array[Int32], Int32)? {
   let parts = text.split("/").collect()
   if parts.length() != 2 {
     return None
@@ -210,7 +210,7 @@ fn parse_cidr(text : String) -> (Array[Int], Int)? {
 }
 
 ///|
-fn parse_decimal(text : StringView) -> Int? {
+fn parse_decimal(text : StringView) -> Int32? {
   let chars : Array[Char] = text.iter().collect()
   if chars.length() == 0 || chars.length() > 3 {
     return None
@@ -228,9 +228,9 @@ fn parse_decimal(text : StringView) -> Int? {
 ///|
 /// Whether the first `prefix` bits of two same-length addresses agree.
 fn prefix_matches(
-  address : Array[Int],
-  network : Array[Int],
-  prefix : Int,
+  address : Array[Int32],
+  network : Array[Int32],
+  prefix : Int32,
 ) -> Bool {
   let full_bytes = prefix / 8
   let remaining_bits = prefix % 8

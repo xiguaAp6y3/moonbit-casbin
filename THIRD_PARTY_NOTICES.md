@@ -38,7 +38,7 @@
 ## Runtime dependencies
 
 - **moonbitlang/core** — Apache-2.0, the MoonBit standard library.
-- **moonbitlang/regexp@0.3.5** — Apache-2.0,
+- **moonbitlang/regexp@0.3.7** — Apache-2.0,
   https://github.com/moonbitlang/regexp.mbt. The official MoonBit regular
   expression engine, used by the `regexMatch`, `keyMatch2`..`keyMatch5`,
   `keyGet2` / `keyGet3`, and `globMatch` operators. Consumed as a

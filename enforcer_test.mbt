@@ -60,20 +60,28 @@ let boolean_matcher_model_text =
   #|m = is_admin(r.sub)
 
 ///|
-fn build_enforcer(model_text : String) -> Enforcer {
-  let model = Model::from_config(Config::parse(model_text).unwrap()).unwrap()
-  Enforcer::new(model).unwrap()
+fn build_enforcer(model_text : String) -> @moonbit-casbin.Enforcer {
+  let model = @moonbit-casbin.Model::from_config(
+    @moonbit-casbin.Config::parse(model_text).unwrap(),
+  ).unwrap()
+  @moonbit-casbin.Enforcer::new(model).unwrap()
 }
 
 ///|
-fn is_admin_function(arguments : Array[Value]) -> Value raise CasbinError {
+fn is_admin_function(
+  arguments : Array[@moonbit-casbin.Value],
+) -> @moonbit-casbin.Value raise @moonbit-casbin.CasbinError {
   if arguments.length() != 1 {
-    raise casbin_error(MatcherEval, "is_admin: expected 1 argument")
+    raise @moonbit-casbin.casbin_error(
+      MatcherEval,
+      "is_admin: expected 1 argument",
+    )
   }
   match arguments[0] {
-    Value::String(name) => Value::Bool(name == "root")
+    @moonbit-casbin.Value::String(name) =>
+      @moonbit-casbin.Value::Bool(name == "root")
     other =>
-      raise casbin_error(
+      raise @moonbit-casbin.casbin_error(
         MatcherEval,
         "is_admin: expected a string, got " + other.type_name(),
       )
@@ -119,7 +127,11 @@ test "unsupported policy effects are rejected at construction" {
     #|[matchers]
     #|m = r.sub == p.sub
   match
-    Enforcer::new(Model::from_config(Config::parse(text).unwrap()).unwrap()) {
+    @moonbit-casbin.Enforcer::new(
+      @moonbit-casbin.Model::from_config(
+        @moonbit-casbin.Config::parse(text).unwrap(),
+      ).unwrap(),
+    ) {
     Err(error) => {
       assert_true(error.kind() == ModelValidation)
       assert_true(error.message().contains("unsupported policy effect"))

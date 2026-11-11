@@ -33,7 +33,9 @@ let rbac_model_text =
 
 ///|
 test "model loads the basic model" {
-  let model = Model::from_config(Config::parse(basic_model_text).unwrap()).unwrap()
+  let model = @moonbit-casbin.Model::from_config(
+    @moonbit-casbin.Config::parse(basic_model_text).unwrap(),
+  ).unwrap()
   let request = model.request_definition("r").unwrap()
   assert_true(request.tokens() == ["sub", "obj", "act"])
   let policy = model.policy_definition("p").unwrap()
@@ -49,7 +51,9 @@ test "model loads the basic model" {
 
 ///|
 test "model loads the RBAC model with a role definition" {
-  let model = Model::from_config(Config::parse(rbac_model_text).unwrap()).unwrap()
+  let model = @moonbit-casbin.Model::from_config(
+    @moonbit-casbin.Config::parse(rbac_model_text).unwrap(),
+  ).unwrap()
   let role = model.role_definition("g").unwrap()
   assert_true(role.tokens() == ["_", "_"])
   assert_true(model.matcher("m") != None)
@@ -66,9 +70,12 @@ test "model requires the matchers section" {
     #|
     #|[policy_effect]
     #|e = some(where (p.eft == allow))
-  match Model::from_config(Config::parse(text).unwrap()) {
+  match
+    @moonbit-casbin.Model::from_config(
+      @moonbit-casbin.Config::parse(text).unwrap(),
+    ) {
     Err(error) => {
-      assert_eq(error.kind(), CasbinErrorKind::ModelValidation)
+      assert_eq(error.kind(), @moonbit-casbin.CasbinErrorKind::ModelValidation)
       assert_true(error.message().contains("[matchers]"))
     }
     Ok(_) => fail("expected a ModelValidation error")
@@ -92,9 +99,12 @@ test "model rejects unknown sections" {
     #|
     #|[wat]
     #|x = y
-  match Model::from_config(Config::parse(text).unwrap()) {
+  match
+    @moonbit-casbin.Model::from_config(
+      @moonbit-casbin.Config::parse(text).unwrap(),
+    ) {
     Err(error) => {
-      assert_eq(error.kind(), CasbinErrorKind::ModelValidation)
+      assert_eq(error.kind(), @moonbit-casbin.CasbinErrorKind::ModelValidation)
       assert_true(error.message().contains("[wat]"))
     }
     Ok(_) => fail("expected a ModelValidation error")
@@ -115,7 +125,10 @@ test "model rejects invalid tokens" {
     #|
     #|[matchers]
     #|m = true
-  match Model::from_config(Config::parse(text).unwrap()) {
+  match
+    @moonbit-casbin.Model::from_config(
+      @moonbit-casbin.Config::parse(text).unwrap(),
+    ) {
     Err(error) => assert_true(error.message().contains("\"1act\""))
     Ok(_) => fail("expected a ModelValidation error")
   }
@@ -135,7 +148,10 @@ test "model rejects mismatched definition prefixes" {
     #|
     #|[matchers]
     #|m = true
-  match Model::from_config(Config::parse(text).unwrap()) {
+  match
+    @moonbit-casbin.Model::from_config(
+      @moonbit-casbin.Config::parse(text).unwrap(),
+    ) {
     Err(error) => assert_true(error.message().contains("must start with \"r\""))
     Ok(_) => fail("expected a ModelValidation error")
   }
@@ -156,7 +172,10 @@ test "model rejects several policy effects" {
     #|
     #|[matchers]
     #|m = true
-  match Model::from_config(Config::parse(text).unwrap()) {
+  match
+    @moonbit-casbin.Model::from_config(
+      @moonbit-casbin.Config::parse(text).unwrap(),
+    ) {
     Err(error) => assert_true(error.message().contains("exactly one entry"))
     Ok(_) => fail("expected a ModelValidation error")
   }
@@ -176,7 +195,10 @@ test "model rejects an empty definition value" {
     #|
     #|[matchers]
     #|m = true
-  match Model::from_config(Config::parse(text).unwrap()) {
+  match
+    @moonbit-casbin.Model::from_config(
+      @moonbit-casbin.Config::parse(text).unwrap(),
+    ) {
     Err(error) => assert_true(error.message().contains("empty token"))
     Ok(_) => fail("expected a ModelValidation error")
   }

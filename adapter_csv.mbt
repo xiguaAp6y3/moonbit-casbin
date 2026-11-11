@@ -17,10 +17,19 @@
 
 ///|
 /// One parsed policy line: the policy type plus the rule values.
+#derive(Eq, Debug)
 pub(all) struct PolicyLine {
   key : String
   values : Array[String]
-} derive(Eq, Debug)
+}
+
+// E0079: derived trait methods stay reachable with dot syntax.
+
+///|
+pub extend PolicyLine with Eq::{not_equal, equal}
+
+///|
+pub extend PolicyLine with @moonbitlang/core/debug.Debug::{to_repr}
 
 ///|
 /// The policy type, for example `p` or `g`.

@@ -32,7 +32,7 @@ pub(all) struct Enforcer {
   request_tokens : Array[String]
   policy_type : String
   policy_tokens : Array[String]
-  eft_index : Int?
+  eft_index : Int32?
   role_managers : Array[(String, RoleManager)]
   mut auto_build_role_links : Bool
 }
@@ -492,7 +492,7 @@ fn qualified_tokens(assertion : Assertion) -> Array[String] {
 }
 
 ///|
-fn find_token(tokens : Array[String], name : String) -> Int? {
+fn find_token(tokens : Array[String], name : String) -> Int32? {
   for i in 0..<tokens.length() {
     if tokens[i] == name {
       return Some(i)

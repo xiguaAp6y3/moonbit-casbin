@@ -9,6 +9,7 @@
 
 ///|
 /// A matcher expression node.
+#derive(Eq, Debug)
 pub(all) enum Expr {
   Literal(Value)
   Ident(String)
@@ -19,19 +20,37 @@ pub(all) enum Expr {
   Unary(UnaryOp, Expr)
   Binary(BinaryOp, Expr, Expr)
   Call(String, Array[Expr])
-} derive(Eq, Debug)
+}
+
+// E0079: derived trait methods stay reachable with dot syntax.
+
+///|
+pub extend Expr with Eq::{not_equal, equal}
+
+///|
+pub extend Expr with @moonbitlang/core/debug.Debug::{to_repr}
 
 ///|
 /// Unary operators.
+#derive(Eq, Debug)
 pub(all) enum UnaryOp {
   /// Logical negation `!`.
   Not
   /// Arithmetic negation `-`.
   Neg
-} derive(Eq, Debug)
+}
+
+// E0079: derived trait methods stay reachable with dot syntax.
+
+///|
+pub extend UnaryOp with Eq::{not_equal, equal}
+
+///|
+pub extend UnaryOp with @moonbitlang/core/debug.Debug::{to_repr}
 
 ///|
 /// Binary operators, lowest precedence first.
+#derive(Eq, Debug)
 pub(all) enum BinaryOp {
   /// `||`
   Or
@@ -61,4 +80,12 @@ pub(all) enum BinaryOp {
   Div
   /// `%`
   Mod
-} derive(Eq, Debug)
+}
+
+// E0079: derived trait methods stay reachable with dot syntax.
+
+///|
+pub extend BinaryOp with Eq::{not_equal, equal}
+
+///|
+pub extend BinaryOp with @moonbitlang/core/debug.Debug::{to_repr}

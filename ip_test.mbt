@@ -15,7 +15,7 @@ test "ipMatch follows Casbin" {
     ("11.0.0.123", "10.0.0.0/8", false),
   ]
   for case in cases {
-    assert_true(ip_match(case.0, case.1) == case.2)
+    assert_true(@moonbit-casbin.ip_match(case.0, case.1) == case.2)
   }
 }
 
@@ -33,7 +33,7 @@ test "ipMatch handles IPv6 addresses and CIDRs" {
     ("192.168.2.123", "2001:db8::/32", false),
   ]
   for case in cases {
-    assert_true(ip_match(case.0, case.1) == case.2)
+    assert_true(@moonbit-casbin.ip_match(case.0, case.1) == case.2)
   }
 }
 
@@ -63,8 +63,11 @@ test "ipMatch rejects invalid arguments" {
 }
 
 ///|
-fn try_ip_match(ip1 : String, ip2 : String) -> Result[Bool, CasbinError] {
-  Ok(ip_match(ip1, ip2)) catch {
+fn try_ip_match(
+  ip1 : String,
+  ip2 : String,
+) -> Result[Bool, @moonbit-casbin.CasbinError] {
+  Ok(@moonbit-casbin.ip_match(ip1, ip2)) catch {
     error => Err(error)
   }
 }

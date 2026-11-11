@@ -2,7 +2,7 @@
 
 ///|
 test "policy store adds rows and skips duplicates" {
-  let store = PolicyStore::new()
+  let store = @moonbit-casbin.PolicyStore::new()
   assert_true(store.add("p", ["alice", "data1", "read"]))
   assert_true(!store.add("p", ["alice", "data1", "read"]))
   assert_true(store.add("p", ["bob", "data2", "write"]))
@@ -15,7 +15,7 @@ test "policy store adds rows and skips duplicates" {
 
 ///|
 test "policy store distinguishes rows with commas" {
-  let store = PolicyStore::new()
+  let store = @moonbit-casbin.PolicyStore::new()
   assert_true(store.add("p", ["a,b", "c"]))
   assert_true(store.add("p", ["a", "b,c"]))
   assert_true(store.rows("p").length() == 2)
@@ -23,7 +23,7 @@ test "policy store distinguishes rows with commas" {
 
 ///|
 test "policy store keeps order after removal" {
-  let store = PolicyStore::new()
+  let store = @moonbit-casbin.PolicyStore::new()
   ignore(store.add("p", ["a"]))
   ignore(store.add("p", ["b"]))
   ignore(store.add("p", ["c"]))
@@ -36,7 +36,7 @@ test "policy store keeps order after removal" {
 
 ///|
 test "policy store clears every section" {
-  let store = PolicyStore::new()
+  let store = @moonbit-casbin.PolicyStore::new()
   ignore(store.add("p", ["a"]))
   ignore(store.add("g", ["alice", "admin"]))
   store.clear()

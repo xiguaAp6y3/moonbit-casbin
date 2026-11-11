@@ -105,7 +105,7 @@ pub fn Enforcer::get_policy(self : Enforcer) -> Array[Array[String]] {
 /// empty string in `values` matches any field.
 pub fn Enforcer::get_filtered_policy(
   self : Enforcer,
-  field_index : Int,
+  field_index : Int32,
   values : Array[String],
 ) -> Array[Array[String]] {
   self.filtered_rows(self.policy_type, field_index, values)
@@ -116,7 +116,7 @@ pub fn Enforcer::get_filtered_policy(
 /// removed.
 pub fn Enforcer::remove_filtered_policy(
   self : Enforcer,
-  field_index : Int,
+  field_index : Int32,
   values : Array[String],
 ) -> Result[Bool, CasbinError] {
   Ok(self.remove_filtered_rows(self.policy_type, field_index, values))
@@ -202,7 +202,7 @@ pub fn Enforcer::get_grouping_policy(self : Enforcer) -> Array[Array[String]] {
 /// The `g` rows matched by `values` (empty string matches any field).
 pub fn Enforcer::get_filtered_grouping_policy(
   self : Enforcer,
-  field_index : Int,
+  field_index : Int32,
   values : Array[String],
 ) -> Array[Array[String]] {
   self.filtered_rows("g", field_index, values)
@@ -213,7 +213,7 @@ pub fn Enforcer::get_filtered_grouping_policy(
 /// removed.
 pub fn Enforcer::remove_filtered_grouping_policy(
   self : Enforcer,
-  field_index : Int,
+  field_index : Int32,
   values : Array[String],
 ) -> Result[Bool, CasbinError] {
   Ok(enforcer_remove_filtered_grouping_rows_raise(self, field_index, values)) catch {
@@ -224,7 +224,7 @@ pub fn Enforcer::remove_filtered_grouping_policy(
 ///|
 fn enforcer_remove_filtered_grouping_rows_raise(
   enforcer : Enforcer,
-  field_index : Int,
+  field_index : Int32,
   values : Array[String],
 ) -> Bool raise CasbinError {
   let removed = enforcer.remove_filtered_rows("g", field_index, values)
@@ -628,7 +628,7 @@ fn Enforcer::manager_domain(
 ///|
 /// The index of the policy token `p_<field>`, if the policy definition has
 /// it (mirrors Casbin's `GetFieldIndex` fallback).
-fn Enforcer::field_index(self : Enforcer, field : String) -> Int? {
+fn Enforcer::field_index(self : Enforcer, field : String) -> Int32? {
   find_token(self.policy_tokens, self.policy_type + "_" + field)
 }
 
@@ -638,7 +638,7 @@ fn Enforcer::field_index(self : Enforcer, field : String) -> Int? {
 fn Enforcer::filtered_rows(
   self : Enforcer,
   key : String,
-  field_index : Int,
+  field_index : Int32,
   values : Array[String],
 ) -> Array[Array[String]] {
   let result : Array[Array[String]] = []
@@ -665,7 +665,7 @@ fn Enforcer::filtered_rows(
 fn Enforcer::remove_filtered_rows(
   self : Enforcer,
   key : String,
-  field_index : Int,
+  field_index : Int32,
   values : Array[String],
 ) -> Bool {
   let rows = self.filtered_rows(key, field_index, values)

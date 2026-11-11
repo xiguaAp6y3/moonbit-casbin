@@ -22,5 +22,5 @@ keywords = [
 ]
 
 import {
-  "moonbitlang/regexp@0.3.5",
+  "moonbitlang/regexp@0.3.7",
 }

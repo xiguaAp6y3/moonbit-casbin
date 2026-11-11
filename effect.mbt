@@ -14,22 +14,40 @@
 ///|
 /// The decision contributed by one policy row, or by the single-evaluation
 /// branch when the matcher does not reference the policy.
+#derive(Eq, Debug)
 pub(all) enum Effect {
   Allow
   /// No decision yet.
   Indeterminate
   Deny
-} derive(Eq, Debug)
+}
+
+// E0079: derived trait methods stay reachable with dot syntax.
+
+///|
+pub extend Effect with Eq::{not_equal, equal}
+
+///|
+pub extend Effect with @moonbitlang/core/debug.Debug::{to_repr}
 
 ///|
 /// The five policy effect expressions Casbin supports.
+#derive(Eq, Debug)
 pub(all) enum EffectExpression {
   AllowOverride
   DenyOverride
   AllowAndDeny
   Priority
   SubjectPriority
-} derive(Eq, Debug)
+}
+
+// E0079: derived trait methods stay reachable with dot syntax.
+
+///|
+pub extend EffectExpression with Eq::{not_equal, equal}
+
+///|
+pub extend EffectExpression with @moonbitlang/core/debug.Debug::{to_repr}
 
 ///|
 /// Parses the canonical effect strings; the text must already be
@@ -56,9 +74,9 @@ pub fn merge_effects(
   expression : EffectExpression,
   effects : Array[Effect],
   matches : Array[Bool],
-  policy_index : Int,
-  policy_length : Int,
-) -> (Effect, Int) {
+  policy_index : Int32,
+  policy_length : Int32,
+) -> (Effect, Int32) {
   let mut result = Indeterminate
   let mut explain_index = -1
   match expression {

@@ -1,0 +1,3 @@
+import {
+  "xiguaAp6y3/moonbit-casbin" @casbin,
+} for "test"
