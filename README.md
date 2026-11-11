@@ -14,8 +14,8 @@ in-memory policy store.
 `moonbit-casbin` 是使用 MoonBit 实现的 [Casbin] 风格授权引擎。它按照与
 Casbin 相同的模型配置格式（`[request_definition]`、`[policy_definition]`、
 `[role_definition]`、`[policy_effect]`、`[matchers]`）加载授权模型，并自带
-matcher 表达式求值引擎；后续将提供访问决策 API（`enforce`）、策略存储与
-管理接口。
+matcher 表达式求值引擎，并提供访问决策 API（`enforce`）、内存策略存储与
+策略/角色管理接口。
 
 当前已实现：
 
@@ -115,7 +115,7 @@ Casbin 是一个广泛使用的授权库，把访问控制策略从业务代码�
 
 ## 不支持内容
 
-当前代码（v0.4）**不包含**：
+当前版本（发布号 `0.1.0`，对应 Roadmap 的 v0.4 阶段）**不包含**：
 
 - 角色名模式匹配（Casbin 的 `AddMatchingFunc` / `AddDomainMatchingFunc`）：
   `has_link` 按名字精确比较；
@@ -324,6 +324,9 @@ moon run examples/matchers     # keyMatch2 / regexMatch / ipMatch / globMatch
 
 ## 测试结果
 
+- 代码规模：手写 MoonBit 7073 行、36 个 `.mbt` 文件（核心库 4687 行 / 18 个
+  文件、库测试 2081 行 / 15 个文件、README 一致性测试 134 行 / 1 个文件、
+  示例 171 行 / 2 个文件）；
 - 具名测试：97 个（配置解析 10、模型加载 8、词法 5、语法 6、求值 8、
   内置函数 5、预处理 4、effect 5、策略存储 4、CSV 适配器 4、判定 12、
   角色管理器 5、RBAC 端到端 7、扩展运算符 11、IP 3）；
@@ -379,7 +382,7 @@ moon run examples/matchers     # keyMatch2 / regexMatch / ipMatch / globMatch
   effect 聚合、`enforce`）。
 - v0.3：RBAC 角色层级与角色域、`g` / `g2` 注入、策略与角色管理 API、
   隐式角色与权限、级联删除。
-- v0.4（当前）：内置匹配函数补齐（`keyMatch2`..`keyMatch5`、`keyGet2` /
+- v0.4（当前，发布号 `0.1.0`）：内置匹配函数补齐（`keyMatch2`..`keyMatch5`、`keyGet2` /
   `keyGet3`、`regexMatch`、`globMatch`、`ipMatch`）与两个可运行示例。
 
 后续计划（尚未开始）：CLI 工具、持久化适配器、角色名模式匹配、`eval()`
