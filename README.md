@@ -6,7 +6,7 @@ in-memory policy store.
 
 > **Project/module**: `xiguaAp6y3/moonbit-casbin`
 > **Repository**: https://github.com/xiguaAp6y3/moonbit-casbin
-> **Version**: 0.1.0
+> **Version**: 0.1.1
 > **License**: Apache-2.0
 
 ## 中文项目介绍
@@ -115,7 +115,7 @@ Casbin 是一个广泛使用的授权库，把访问控制策略从业务代码�
 
 ## 不支持内容
 
-当前版本（发布号 `0.1.0`，对应 Roadmap 的 v0.4 阶段）**不包含**：
+当前版本（发布号 `0.1.1`，对应 Roadmap 的 v0.4 阶段）**不包含**：
 
 - 角色名模式匹配（Casbin 的 `AddMatchingFunc` / `AddDomainMatchingFunc`）：
   `has_link` 按名字精确比较；
@@ -382,7 +382,7 @@ moon run examples/matchers     # keyMatch2 / regexMatch / ipMatch / globMatch
   effect 聚合、`enforce`）。
 - v0.3：RBAC 角色层级与角色域、`g` / `g2` 注入、策略与角色管理 API、
   隐式角色与权限、级联删除。
-- v0.4（当前，发布号 `0.1.0`）：内置匹配函数补齐（`keyMatch2`..`keyMatch5`、`keyGet2` /
+- v0.4（当前，发布号 `0.1.1`）：内置匹配函数补齐（`keyMatch2`..`keyMatch5`、`keyGet2` /
   `keyGet3`、`regexMatch`、`globMatch`、`ipMatch`）与两个可运行示例。
 
 后续计划（尚未开始）：CLI 工具、持久化适配器、角色名模式匹配、`eval()`
