@@ -12,6 +12,7 @@
 | 管理 API | 策略与角色增删查、隐式角色、隐式权限和过滤查询 |
 | 内置函数 | `keyMatch`、`keyGet`、`regexMatch`、`globMatch`、IPv4/IPv6/CIDR `ipMatch` |
 | 错误处理 | 配置、模型、策略、matcher 和 enforcement 错误分类及定位信息 |
+| 文档一致性 | `readme_examples/` 重跑 README 五段示例并断言文档声明的 `tokens()`、错误类别/行号/消息与判定结果 |
 
 ## 目标矩阵
 
